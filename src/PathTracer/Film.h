@@ -1,0 +1,41 @@
+#pragma once
+
+#include <glm/glm.hpp>
+
+#include <vector>
+
+class Film
+{
+public:
+    Film();
+	Film(int _width, int _height);
+
+    void Resize(int _width, int _height);
+    void Reset();
+
+    // Add one sample in linear RGB
+	void AddSample(int _x, int _y, const glm::vec3& linearRGB);
+
+    // Read the current average (linear space). Returns {0,0,0} if no samples yet.
+    glm::vec3 AverageAt(int _x, int _y) const;
+
+	// Returns a reference to an internal buffer sized W*H*4. Used for OpenGL texture upload.
+    const std::vector<std::uint8_t>& ResolveToRGBA8();
+
+    int  Width() const { return mWidth; }
+    int  Height() const { return mHeight; }
+    int  PixelCount() const { return mWidth * mHeight; }
+
+    const std::vector<glm::vec3>& accum() const { return mAccum; }
+    const std::vector<std::uint32_t>& samples() const { return mSamples; }
+
+private:
+	int mWidth = 0;
+	int mHeight = 0;
+
+    std::vector<glm::vec3> mAccum; // Linear sums per pixel
+    std::vector<std::uint32_t> mSamples; // Sample counts per pixel
+    std::vector<std::uint8_t>  mDisplay8; // Cached RGBA8 output
+
+	bool mDirty = true; // Accumulation changed since last resolve
+};
