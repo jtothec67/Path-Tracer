@@ -13,7 +13,6 @@ Film::Film(int _width, int _height)
 	Resize(_width, _height);
 }
 
-
 void Film::Resize(int _width, int _height)
 {
     mWidth = glm::max(0, _width);
@@ -29,6 +28,14 @@ void Film::Reset()
 {
     std::fill(mAccum.begin(), mAccum.end(), glm::vec3(0.0f));
     std::fill(mSamples.begin(), mSamples.end(), 0u);
+    mDirty = true;
+}
+
+void Film::AddSample(int _x, int _y, const glm::vec3& _linearRGB)
+{
+    const int p = _y * mWidth + _x;
+    mAccum[p] += _linearRGB;
+    mSamples[p] += 1u;
     mDirty = true;
 }
 

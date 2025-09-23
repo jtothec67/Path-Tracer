@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
 
-project(PATHTRACER)
+project(PathTracer)
 
 include_directories(
 	src
@@ -24,11 +24,25 @@ set(IMGUI_SOURCES
 add_executable(PathTracer
     src/PathTracer/main.cpp
 
+    src/PathTracer/Ray.h
+
+    src/PathTracer/RayObject.h
+    src/PathTracer/RayObject.cpp
+
+    src/PathTracer/Sphere.h
+    src/PathTracer/Sphere.cpp
+
+    src/PathTracer/Camera.h
+    src/PathTracer/Camera.cpp
+
     src/PathTracer/Film.h
     src/PathTracer/Film.cpp
 
     src/PathTracer/Window.h
     src/PathTracer/Window.cpp
+
+    src/PathTracer/PathTracer.h
+    src/PathTracer/PathTracer.cpp
 )
 
 

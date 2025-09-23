@@ -14,7 +14,7 @@ public:
     void Reset();
 
     // Add one sample in linear RGB
-	void AddSample(int _x, int _y, const glm::vec3& linearRGB);
+	void AddSample(int _x, int _y, const glm::vec3& _linearRGB);
 
     // Read the current average (linear space). Returns {0,0,0} if no samples yet.
     glm::vec3 AverageAt(int _x, int _y) const;
@@ -26,8 +26,8 @@ public:
     int  Height() const { return mHeight; }
     int  PixelCount() const { return mWidth * mHeight; }
 
-    const std::vector<glm::vec3>& accum() const { return mAccum; }
-    const std::vector<std::uint32_t>& samples() const { return mSamples; }
+    const std::vector<glm::vec3>& Accum() const { return mAccum; }
+    const std::vector<std::uint32_t>& Samples() const { return mSamples; }
 
 private:
 	int mWidth = 0;

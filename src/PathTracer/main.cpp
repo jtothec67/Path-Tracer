@@ -1,5 +1,8 @@
 #include "Film.h"
 #include "Window.h"
+#include "Sphere.h"
+#include "PathTracer.h"
+#include "Camera.h"
 
 #include <IMGUI/imgui.h>
 #include <IMGUI/imgui_impl_sdl2.h>
@@ -10,11 +13,15 @@
 #undef main
 int main()
 {
-	int _width = 800;
-	int _height = 600;
+	int winWidth = 800;
+	int winHeight = 600;
 
-	Film film(_width, _height);
-	Window window(_width, _height, "Tracer");
+	Film film(winWidth, winHeight);
+	Window window(winWidth, winHeight, "Tracer");
+
+	PathTracer pathTracer;
+
+	Camera camera(glm::ivec2(winWidth, winHeight));
 
 	// Setting up the GUI system
 	IMGUI_CHECKVERSION();
@@ -28,6 +35,10 @@ int main()
 	const char* glslVersion = "#version 430";
 	ImGui_ImplSDL2_InitForOpenGL(window.GetSDLWindow(), window.GetGLContext());
 	ImGui_ImplOpenGL3_Init(glslVersion);
+
+    std::shared_ptr<Sphere> sphere1 = std::make_shared<Sphere>("Sphere 1", glm::vec3(0.0f, 0.0f, -5.0f), 1.0f);
+	
+	pathTracer.AddRayObject(sphere1);
 
 	bool running = true;
 	int i = 0;
@@ -51,11 +62,25 @@ int main()
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_RESIZED)
 				{
-					_width = event.window.data1;
-					_height = event.window.data2;
-					film.Resize(_width, _height);
-					window.Resize(_width, _height);
+					winWidth = event.window.data1;
+					winHeight = event.window.data2;
+					film.Resize(winWidth, winHeight);
+					window.Resize(winWidth, winHeight);
 				}
+			}
+		}
+
+		winWidth = window.Width();
+		winHeight = window.Height();
+
+		// Tracing
+		for (int y = 0; y < winHeight; ++y)
+		{
+			for (int x = 0; x < winWidth; ++x)
+			{
+				Ray ray = camera.GetRay({ x, y }, { winWidth, winHeight });
+				glm::vec3 colour = pathTracer.TraceRay(ray, camera.GetPosition(), 0);
+				film.AddSample(x, y, colour);
 			}
 		}
 
@@ -66,9 +91,14 @@ int main()
 
 			ImGui::Begin("Scene Controls");
 
-			if (ImGui::Button("Test button"))
+			if (ImGui::Button("Rest Accumulation"))
 			{
-				std::cout << "Test button pressed" << std::endl;
+				film.Reset();
+			}
+
+			for (auto& rayObject : pathTracer.GetRayObjects())
+			{
+				rayObject->UpdateUI();
 			}
 
 			ImGui::End();
