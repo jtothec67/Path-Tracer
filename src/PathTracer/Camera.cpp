@@ -21,7 +21,6 @@ Camera::Camera(glm::vec3 _position, glm::vec3 _rotation, glm::ivec2 _winSize)
 
 void Camera::CalculateMatrices(glm::ivec2 _winSize)
 {
-    // keep your Euler angles; order is up to you
     glm::mat4 R = glm::mat4(1.f);
     R = glm::rotate(R, glm::radians(mRotation.x), { 1,0,0 });
     R = glm::rotate(R, glm::radians(mRotation.y), { 0,1,0 });
@@ -40,17 +39,17 @@ Ray Camera::GetRay(glm::ivec2 _windowPos, glm::ivec2 _windowSize)
 {
     // 1) NDC
     float nx = ((_windowPos.x + 0.5f) / float(_windowSize.x)) * 2.f - 1.f;
-    float ny = 1.f - ((_windowPos.y + 0.5f) / float(_windowSize.y)) * 2.f;
+    float ny = ((_windowPos.y + 0.5f) / float(_windowSize.y)) * 2.f - 1.f;
 
-    // 2) clip near/far
+    // 2) Clip near/far
     glm::vec4 clipNear(nx, ny, -1.f, 1.f);
     glm::vec4 clipFar(nx, ny, 1.f, 1.f);
 
-    // 3) camera space
+    // 3) Camera space
     glm::vec4 camNear = mInvProj * clipNear; camNear /= camNear.w;
     glm::vec4 camFar = mInvProj * clipFar;  camFar /= camFar.w;
 
-    // 4) world space: origin at camera, direction uses rotation only
+    // 4) World space: origin at camera, direction uses rotation only
     glm::vec3 originWorld = glm::vec3(mInvView * glm::vec4(0, 0, 0, 1));
     glm::vec3 dirCam = glm::normalize(glm::vec3(camFar - camNear));
     glm::vec3 dirWorld = glm::normalize(glm::mat3(mInvView) * dirCam);

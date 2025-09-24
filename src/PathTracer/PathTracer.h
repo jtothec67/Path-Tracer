@@ -8,7 +8,7 @@
 class PathTracer
 {
 public:
-	glm::vec3 TraceRay(Ray _ray, glm::vec3 _camPos, int _depth);
+	glm::vec3 TraceRay(Ray _ray, int _depth, bool _albedoOnly = false);
 
 	const std::vector<std::shared_ptr<RayObject>>& GetRayObjects() { return rayObjects; }
 	void AddRayObject(std::shared_ptr<RayObject> _rayObject) { rayObjects.push_back(_rayObject); }
@@ -17,12 +17,8 @@ public:
 	int GetSizeOfRayObjects() { return rayObjects.size(); }
 	void ClearScene() { rayObjects.clear(); }
 
-	void SetDepth(int _depth) { mMaxDepth = _depth; }
-	int GetDepth() { return mMaxDepth; }
-
 private:
-	glm::vec3 mBackgroundColour{ 0.2f, 0.2f, 0.2f };
-	int mMaxDepth = 2;
+	glm::vec3 mBackgroundColour{ 0.5f, 0.5f, 0.5f };
 
 	std::vector<std::shared_ptr<RayObject>> rayObjects;
 };

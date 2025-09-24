@@ -2,6 +2,17 @@
 
 #include <IMGUI/imgui.h>
 
+Sphere::Sphere(std::string _name)
+{
+    mName = _name;
+}
+
+Sphere::Sphere(std::string _name, glm::vec3 _position)
+{
+    mName = _name;
+    mPosition = _position;
+}
+
 Sphere::Sphere(std::string _name, glm::vec3 _position, float _radius)
 {
     mName = _name;
@@ -25,18 +36,19 @@ bool Sphere::RayIntersect(const Ray& _ray, float _tMin, float _tMax, Hit& _out)
 
     // Quadratic coefficients for |oc + t*d|^2 = r^2  ->  a t^2 + 2h t + c = 0
     const float a = glm::dot(_ray.direction, _ray.direction);
-    const float h = glm::dot(oc, _ray.direction);                 // half-b
+    const float h = glm::dot(oc, _ray.direction); // Half-b
     const float c = glm::dot(oc, oc) - mRadius * mRadius;
 
     const float disc = h * h - a * c;
-    if (disc < 0.0f) return false;                                // no real roots
+    if (disc < 0.0f) return false; // No real roots
 
     const float sqrtDisc = std::sqrt(disc);
 
     // Find nearest root in the acceptable range
-    float t = (-h - sqrtDisc) / a;                                // smaller root
-    if (t < _tMin || t > _tMax) {
-        t = (-h + sqrtDisc) / a;                                  // larger root (exit hit if inside)
+    float t = (-h - sqrtDisc) / a; // Smaller root
+    if (t < _tMin || t > _tMax)
+    {
+        t = (-h + sqrtDisc) / a;
         if (t < _tMin || t > _tMax) return false;
     }
 
@@ -47,7 +59,11 @@ bool Sphere::RayIntersect(const Ray& _ray, float _tMin, float _tMax, Hit& _out)
     // Outward normal (geometric)
     glm::vec3 outward = (_out.p - mPosition) / mRadius;
 
-    _out.mat = &mMaterial;                                      // or set your material pointer/index
+    // Face-forward the shading normal and record which side we hit
+    bool frontFace = glm::dot(_ray.direction, outward) < 0.0f;
+    _out.n = frontFace ? outward : -outward;
+
+    _out.mat = &mMaterial;
     return true;
 }
 

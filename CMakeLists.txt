@@ -43,6 +43,12 @@ add_executable(PathTracer
 
     src/PathTracer/PathTracer.h
     src/PathTracer/PathTracer.cpp
+
+    src/PathTracer/Timer.h
+    src/PathTracer/Timer.cpp
+
+    src/PathTracer/ThreadPool.h
+    src/PathTracer/ThreadPool.cpp
 )
 
 

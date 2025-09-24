@@ -3,6 +3,8 @@
 #include "Sphere.h"
 #include "PathTracer.h"
 #include "Camera.h"
+#include "Timer.h"
+#include "ThreadPool.h"
 
 #include <IMGUI/imgui.h>
 #include <IMGUI/imgui_impl_sdl2.h>
@@ -10,18 +12,50 @@
 
 #include <iostream>
 
+void TracePixels(int _fromy, int _toy, glm::ivec2 _winSize, std::shared_ptr<Camera> _camera, std::shared_ptr<PathTracer> _pathTracer, std::shared_ptr<Film> _film, int _depth, bool _albedoOnly)
+{
+	for (int y = _fromy; y <= _toy && y < _winSize.y; ++y)
+	{
+		for (int x = 0; x < _winSize.x; ++x)
+		{
+			Ray ray = _camera->GetRay({ x, y }, _winSize);
+			glm::vec3 colour = _pathTracer->TraceRay(ray, _depth, _albedoOnly);
+			_film->AddSample(x, y, colour);
+		}
+	}
+}
+
+void RayTraceParallel(ThreadPool& threadPool, int _numTasks, glm::ivec2 _winSize, std::shared_ptr<Camera> _camera, std::shared_ptr<PathTracer> _pathTracer, std::shared_ptr<Film> _film, int _depth, bool _albedoOnly)
+{
+	// Calculate the number of rows each thread should process
+	int rowsPerThread = std::ceil(_winSize.y / static_cast<float>(_numTasks));
+
+	// Enqueue tasks
+	for (int i = 0; i < _numTasks; ++i)
+	{
+		int startY = i * rowsPerThread; // Starting row for this task
+		int endY = std::min(startY + rowsPerThread, _winSize.y); // Ending row for this task
+
+		// Enqueue the task to trace pixels for the assigned rows
+		threadPool.EnqueueTask([=] { TracePixels(startY, endY - 1, _winSize, _camera, _pathTracer, _film, _depth, _albedoOnly); });
+	}
+
+	// Wait for all tasks to complete
+	threadPool.WaitForCompletion();
+}
+
 #undef main
 int main()
 {
 	int winWidth = 800;
 	int winHeight = 600;
 
-	Film film(winWidth, winHeight);
+	std::shared_ptr<Film> film = std::make_shared<Film>(winWidth, winHeight);
 	Window window(winWidth, winHeight, "Tracer");
 
-	PathTracer pathTracer;
+	std::shared_ptr<PathTracer> pathTracer = std::make_shared<PathTracer>();
 
-	Camera camera(glm::ivec2(winWidth, winHeight));
+	std::shared_ptr<Camera> camera = std::make_shared<Camera>(glm::ivec2(winWidth, winHeight));
 
 	// Setting up the GUI system
 	IMGUI_CHECKVERSION();
@@ -36,16 +70,61 @@ int main()
 	ImGui_ImplSDL2_InitForOpenGL(window.GetSDLWindow(), window.GetGLContext());
 	ImGui_ImplOpenGL3_Init(glslVersion);
 
-    std::shared_ptr<Sphere> sphere1 = std::make_shared<Sphere>("Sphere 1", glm::vec3(0.0f, 0.0f, -5.0f), 1.0f);
-	
-	pathTracer.AddRayObject(sphere1);
+	// --- Planet (ground) ---
+	// Radius is huge; center.y = -R so the surface sits at y = 0.
+	std::shared_ptr<Sphere> planet = std::make_shared<Sphere>("Planet", glm::vec3(0.0f, -1000.0f, -6.0f));
+	planet->SetRadius(999.f);
+
+	Material planetMat;
+	planetMat.albedo = glm::vec3(0.60f, 0.80f, 1.00f);   // light blue
+	planet->SetMaterial(planetMat);
+
+	pathTracer->AddRayObject(planet);
+
+	// --- Pink sphere sitting on the planet ---
+	// Put it at y = radius so it rests on the y=0 surface.
+	std::shared_ptr<Sphere> pink = std::make_shared<Sphere>("Pink Sphere", glm::vec3(0.0f, -0.5f, -3.5f));
+	pink->SetRadius(0.5f);
+
+	Material pinkMat;
+	pinkMat.albedo = glm::vec3(1.0f, 0.2f, 0.6f);        // pink
+	pink->SetMaterial(pinkMat);
+
+	pathTracer->AddRayObject(pink);
+
+	// --- Sun (emissive) ---
+	std::shared_ptr<Sphere> sun = std::make_shared<Sphere>("Sun", glm::vec3(-4.0f, 4.0f, -6.f));
+	sun->SetRadius(1.0f);
+
+	Material sunMat;
+	sunMat.emissionColour = glm::vec3(1.0f, 1.0f, 1.0f);
+	sunMat.emissionStrength = 60.0f;                     // tweak to taste
+	sun->SetMaterial(sunMat);
+
+	pathTracer->AddRayObject(sun);
+
+
+	int numThreads = 32;
+	int numTasks = 128;
+	ThreadPool threadPool(numThreads);
+
+	int rayDepth = 10;
+
+	Timer timer;
+	float msPerFrame = 0.0f;
+
+	Timer accumulationTimer;
+	int frameCounter = 0;
+
+	bool albedoOnly = false;
+
+	SDL_Event event;
 
 	bool running = true;
-	int i = 0;
 	while (running)
 	{
-		std::cout << i++ << std::endl;
-		SDL_Event event;
+		timer.Start();
+
 		if (SDL_PollEvent(&event))
 		{
 			ImGui_ImplSDL2_ProcessEvent(&event);
@@ -64,25 +143,54 @@ int main()
 				{
 					winWidth = event.window.data1;
 					winHeight = event.window.data2;
-					film.Resize(winWidth, winHeight);
+					film->Resize(winWidth, winHeight);
+					film->Reset();
+					accumulationTimer.Reset();
+					frameCounter = 0;
 					window.Resize(winWidth, winHeight);
+				}
+			}
+			if (event.type == SDL_KEYDOWN)
+			{
+				switch (event.key.keysym.sym)
+				{
+					// Camera movement
+				case SDLK_w:
+					camera->SetPosition(camera->GetPosition() + camera->GetForward());
+					break;
+				case SDLK_s:
+					camera->SetPosition(camera->GetPosition() - camera->GetForward());
+					break;
+				case SDLK_a:
+					camera->SetPosition(camera->GetPosition() + camera->GetRight());
+					break;
+				case SDLK_d:
+					camera->SetPosition(camera->GetPosition() - camera->GetRight());
+					break;
+				case SDLK_q:
+					camera->SetPosition(camera->GetPosition() - glm::vec3(0, 1, 0));
+					break;
+				case SDLK_e:
+					camera->SetPosition(camera->GetPosition() + glm::vec3(0, 1, 0));
+					break;
+				case SDLK_UP:
+					camera->SetRotation(glm::vec3(camera->GetRotation().x - 1, camera->GetRotation().y, camera->GetRotation().z));
+					break;
+				case SDLK_DOWN:
+					camera->SetRotation(glm::vec3(camera->GetRotation().x + 1, camera->GetRotation().y, camera->GetRotation().z));
+					break;
+				case SDLK_LEFT:
+					camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y - 1, camera->GetRotation().z));
+					break;
+				case SDLK_RIGHT:
+					camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y + 1, camera->GetRotation().z));
+					break;
 				}
 			}
 		}
 
 		winWidth = window.Width();
 		winHeight = window.Height();
-
-		// Tracing
-		for (int y = 0; y < winHeight; ++y)
-		{
-			for (int x = 0; x < winWidth; ++x)
-			{
-				Ray ray = camera.GetRay({ x, y }, { winWidth, winHeight });
-				glm::vec3 colour = pathTracer.TraceRay(ray, camera.GetPosition(), 0);
-				film.AddSample(x, y, colour);
-			}
-		}
 
 		{
 			ImGui_ImplOpenGL3_NewFrame();
@@ -91,12 +199,48 @@ int main()
 
 			ImGui::Begin("Scene Controls");
 
-			if (ImGui::Button("Rest Accumulation"))
+            ImGui::Text("%.3f ms", msPerFrame);
+
+			ImGui::Text("%.0f seconds", accumulationTimer.GetElapsedSeconds());
+			ImGui::Text("%i frames", frameCounter);
+
+            if (ImGui::Checkbox("Albedo Only", &albedoOnly))
+            {
+                // If it was just disabled, reset film once for accumulation
+                if (!albedoOnly)
+                {
+                    film->Reset();
+					accumulationTimer.Reset();
+					frameCounter = 0;
+                }
+            }
+			if (albedoOnly)
 			{
-				film.Reset();
+				// Use as a debug so don't want accumulation
+				film->Reset();
+				accumulationTimer.Reset();
+				frameCounter = 0;
 			}
 
-			for (auto& rayObject : pathTracer.GetRayObjects())
+			if (ImGui::Button("Rest Accumulation"))
+			{
+				film->Reset();
+				accumulationTimer.Reset();
+				frameCounter = 0;
+			}
+
+			ImGui::SliderInt("Ray Depth", &rayDepth, 1, 10);
+
+			if(ImGui::SliderInt("Number of threads", &numThreads, 1, 128))
+			{
+				threadPool.Shutdown();
+				threadPool.InitialiseThreads(numThreads);
+			}
+
+			ImGui::SliderInt("Number of tasks", &numTasks, 1, 128);
+
+
+			for (auto& rayObject : pathTracer->GetRayObjects())
 			{
 				rayObject->UpdateUI();
 			}
@@ -104,7 +248,10 @@ int main()
 			ImGui::End();
 		}
 
-		window.DrawScreen(film.ResolveToRGBA8());
+		frameCounter++;
+		RayTraceParallel(threadPool, numTasks, glm::ivec2(winWidth, winHeight), camera, pathTracer, film, rayDepth, albedoOnly);
+
+		window.DrawScreen(film->ResolveToRGBA8());
 
 		// Draws the GUI
 		ImGui::Render();
@@ -121,6 +268,8 @@ int main()
 		}
 
 		SDL_GL_SwapWindow(window.GetSDLWindow());
+
+		msPerFrame = timer.GetElapsedMilliseconds();
 	}
 
 	// Shut down GUI system
