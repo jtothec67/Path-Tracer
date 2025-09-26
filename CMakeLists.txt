@@ -32,6 +32,9 @@ add_executable(PathTracer
     src/PathTracer/Sphere.h
     src/PathTracer/Sphere.cpp
 
+    src/PathTracer/Box.h
+    src/PathTracer/Box.cpp
+
     src/PathTracer/Camera.h
     src/PathTracer/Camera.cpp
 

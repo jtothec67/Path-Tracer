@@ -41,6 +41,9 @@ public:
 	void SetPosition(const glm::vec3& _position) { mPosition = _position; }
 	glm::vec3 GetPosition() { return mPosition; }
 
+	void SetRotation(const glm::vec3& _rotation) { mRotation = _rotation; }
+	glm::vec3 GetRotation() { return mRotation; }
+
 	void SetMaterial(const Material& _material) { mMaterial = _material; }
 	Material GetMaterial() { return mMaterial; }
 
@@ -51,6 +54,7 @@ protected:
 	std::string mName = "Object";
 
 	glm::vec3 mPosition = glm::vec3(0.0f);
+	glm::vec3 mRotation = glm::vec3(0.0f);
 
 	Material mMaterial;
 };

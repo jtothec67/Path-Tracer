@@ -72,6 +72,7 @@ void Sphere::UpdateUI()
     if (ImGui::TreeNode(mName.c_str()))
     {
         ImGui::DragFloat3("Position ", &mPosition[0], 0.1);
+        ImGui::DragFloat3("Rotation ", &mRotation[0], 1.0f);
         ImGui::SliderFloat("Radius ", &mRadius, 0.0f, 20.0f);
         ImGui::ColorEdit3("Albedo", &mMaterial.albedo.r);
         ImGui::DragFloat("Roughness", &mMaterial.roughness, 0.01f, 0.0f, 1.0f);

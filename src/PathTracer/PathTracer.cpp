@@ -2,6 +2,7 @@
 
 #include <random>
 #include <thread>
+#include <iostream>
 
 // Thread-local RNG (avoid rand() in threads)
 static thread_local std::mt19937 g_rng{
