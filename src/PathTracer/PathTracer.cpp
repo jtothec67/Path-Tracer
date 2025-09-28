@@ -63,7 +63,6 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
         return best.mat->albedo;
 	}
 
-    // For now, just return the material’s albedo
     const Material& m = *best.mat;
     
     // Start with emission at the hit
@@ -80,16 +79,109 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
 
     b = glm::cross(n, t);
 
-    // Local cosine-weighted dir -> world
-    glm::vec3 dLocal = SampleCosineHemisphereLocal();
-    glm::vec3 dWorld = glm::normalize(dLocal.x * t + dLocal.y * b + dLocal.z * n);
+    // View direction at hit (pointing away from surface)
+    glm::vec3 wo = glm::normalize(-_ray.direction);
+    glm::vec3 woL(glm::dot(wo, t), glm::dot(wo, b), glm::dot(wo, n));
+    float cosNo = std::max(0.0f, woL.z);
 
-    Ray next;
-    next.origin = best.p + n * kTMin; // Epsilon along outward normal
-    next.direction = dWorld;
+    // Specular parameters (dielectric)
+    glm::vec3 F0 = glm::mix(glm::vec3(0.04f), m.albedo, glm::vec3(m.metallic));
+    float roughness = glm::clamp(m.roughness, 0.0f, 1.0f);
+    float alpha = std::max(1e-4f, roughness * roughness);
 
-    // Simple Lambertian throughput: multiply by albedo
-    L += m.albedo * TraceRay(next, _depth - 1);
+    // Fresnel-Schlick at the view angle
+    glm::vec3 one(1.0f);
+    float cosThetaV = glm::clamp(cosNo, 0.0f, 1.0f);
+    glm::vec3 Fv = F0 + (one - F0) * std::pow(1.0f - cosThetaV, 5.0f);
+
+    // Use Fresnel as mixture prob of sampling specular
+    float specProb = glm::clamp((Fv.x + Fv.y + Fv.z) * (1.0f / 3.0f), 0.05f, 0.95f);
+
+    if (Rand01() < specProb)
+    {
+        // Specular / GGX reflection
+
+        // Sample GGX half-vector in LOCAL space (z=up)
+        glm::vec3 hL;
+        if (roughness <= 1e-4f)
+        {
+            // Perfect mirror
+            hL = glm::vec3(0, 0, 1);
+        }
+        else
+        {
+            float u1 = Rand01();
+            float u2 = Rand01();
+            float phi = 2.0f * 3.1415926535f * u1;
+
+            float a2 = alpha * alpha;
+            float tan2t = a2 * u2 / std::max(1e-6f, 1.0f - u2);
+            float cosT = 1.0f / std::sqrt(1.0f + tan2t);
+            float sinT = std::sqrt(std::max(0.0f, 1.0f - cosT * cosT));
+            hL = glm::normalize(glm::vec3(sinT * std::cos(phi), sinT * std::sin(phi), cosT));
+        }
+
+        // Reflect woL around hL
+        glm::vec3 wiL = glm::reflect(-woL, glm::normalize(hL));
+        if (wiL.z <= 0.0f)
+            return L; // below the surface -> no contribution this sample
+
+        // World-space outgoing
+        glm::vec3 wi = glm::normalize(wiL.x * t + wiL.y * b + wiL.z * n);
+
+        // BRDF terms
+        float cosNi = std::max(0.0f, wiL.z);
+        float cosNh = std::max(0.0f, hL.z);
+        float cosVh = std::max(0.0f, glm::dot(woL, hL));
+
+        // Fresnel-Schlick at v·h
+        glm::vec3 F = F0 + (one - F0) * std::pow(1.0f - glm::clamp(cosVh, 0.0f, 1.0f), 5.0f);
+
+        // GGX NDF D
+        float a2 = alpha * alpha;
+        float d = cosNh * cosNh * (a2 - 1.0f) + 1.0f;
+        float D = a2 / (3.1415926535f * d * d);
+
+        // Smith GGX masking-shadowing G (separable G1)
+        auto G1 = [&](float cosNw)
+            {
+            cosNw = glm::clamp(cosNw, 0.0f, 1.0f);
+            float sinNw = std::sqrt(std::max(0.0f, 1.0f - cosNw * cosNw));
+            float tanNw = (cosNw > 0.0f) ? (sinNw / cosNw) : 0.0f;
+            float root = std::sqrt(1.0f + (alpha * alpha) * (tanNw * tanNw));
+            return 2.0f / (1.0f + root);
+            };
+        float G = G1(cosNo) * G1(cosNi);
+
+        // Importance sampling via half-vector:
+        // weight = (fr * cos) / pdf = F * G * cosVh / (cosNo * cosNh)
+        float denom = std::max(1e-6f, cosNo * cosNh);
+        glm::vec3 weight = (F * (G * cosVh)) / denom;
+
+        // Divide by lobe selection probability
+        weight /= std::max(1e-3f, specProb);
+
+        Ray next;
+        next.origin = best.p + n * kTMin;
+        next.direction = wi;
+
+        L += weight * TraceRay(next, _depth - 1);
+    }
+    else
+    {
+        // Diffuse (Lambertian)
+        glm::vec3 dLocal = SampleCosineHemisphereLocal();
+        glm::vec3 dWorld = glm::normalize(dLocal.x * t + dLocal.y * b + dLocal.z * n);
+
+        Ray next;
+        next.origin = best.p + n * kTMin;
+        next.direction = dWorld;
+
+        // Cosine-weighted Lambert: throughput *= albedo
+        // Account for lobe choice by dividing by (1 - specProb)
+        glm::vec3 weight = ((1.0f - m.metallic) * m.albedo) / std::max(1e-3f, (1.0f - specProb));
+        L += weight * TraceRay(next, _depth - 1);
+    }
 
     return L;
 }

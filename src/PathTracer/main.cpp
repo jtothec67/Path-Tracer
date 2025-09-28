@@ -200,11 +200,11 @@ int main()
 
 	// Sphere
 	{
-		auto sphere = std::make_shared<Sphere>("Sphere", glm::vec3(0.2f, -0.3f, -7.0f));
+		auto sphere = std::make_shared<Sphere>("Sphere", glm::vec3(-0.2f, -0.3f, -7.0f));
 		sphere->SetRadius(0.535f);
 		Material sphereMat;
-		sphereMat.albedo = glm::vec3(0.9f, 0.9f, 0.9f);
-		sphereMat.roughness = 0.0f;   // smooth and shiny
+		sphereMat.albedo = glm::vec3(0.6343, 0.5316, 0.1109);
+		sphereMat.roughness = 0.0f;
 		sphere->SetMaterial(sphereMat);
 		pathTracer->AddRayObject(sphere);
 	}
@@ -222,7 +222,9 @@ int main()
 	Timer accumulationTimer;
 	int frameCounter = 0;
 
-	bool albedoOnly = false;
+	bool albedoOnly = true;
+
+	bool sRGB = true;
 
 	SDL_Event event;
 
@@ -328,6 +330,22 @@ int main()
 				frameCounter = 0;
 			}
 
+			ImGui::Checkbox("sRGB output ", &sRGB);
+
+			// Grab current value as int
+			int current = static_cast<int>(film->GetToneMap());
+			int before = current;
+
+			ImGui::TextUnformatted("Tone mapping");
+			// One radio per enum value (keep values in sync with your enum)
+			if (ImGui::RadioButton("None", &current, static_cast<int>(ToneMap::None))) {}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Reinhard", &current, static_cast<int>(ToneMap::Reinhard))) {}
+
+			// If user changed selection, push it back as enum
+			if (current != before)
+				film->SetToneMap(static_cast<ToneMap>(current));
+
 			if (ImGui::Button("Rest Accumulation"))
 			{
 				film->Reset();
@@ -357,7 +375,9 @@ int main()
 		frameCounter++;
 		RayTraceParallel(threadPool, numTasks, glm::ivec2(winWidth, winHeight), camera, pathTracer, film, rayDepth, albedoOnly);
 
-		window.DrawScreen(film->ResolveToRGBA8());
+		auto RGBA = sRGB ? film->ResolveToRGBA8_sRGB() : film->ResolveToRGBA8();
+
+		window.DrawScreen(RGBA);
 
 		// Draws the GUI
 		ImGui::Render();

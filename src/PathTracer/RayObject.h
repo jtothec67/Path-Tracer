@@ -14,8 +14,6 @@ struct Material
 	float metallic = 0.0f;
 	glm::vec3 emissionColour = glm::vec3(1.0f);
 	float emissionStrength = 0.0f;
-
-	glm::vec3 GetEmission() { return emissionColour * emissionStrength; }
 };
 
 struct Hit

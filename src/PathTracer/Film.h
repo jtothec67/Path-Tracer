@@ -4,6 +4,12 @@
 
 #include <vector>
 
+enum class ToneMap
+{
+    None,
+    Reinhard
+};
+
 class Film
 {
 public:
@@ -22,6 +28,11 @@ public:
 	// Returns a reference to an internal buffer sized W*H*4. Used for OpenGL texture upload.
     const std::vector<std::uint8_t>& ResolveToRGBA8();
 
+    const std::vector<std::uint8_t>& ResolveToRGBA8_sRGB();
+
+	void SetToneMap(ToneMap _toneMap) { toneMap = _toneMap; mDirty = true; }
+	ToneMap GetToneMap() const { return toneMap; }
+
     int  Width() const { return mWidth; }
     int  Height() const { return mHeight; }
     int  PixelCount() const { return mWidth * mHeight; }
@@ -36,6 +47,8 @@ private:
     std::vector<glm::vec3> mAccum; // Linear sums per pixel
     std::vector<std::uint32_t> mSamples; // Sample counts per pixel
     std::vector<std::uint8_t>  mDisplay8; // Cached RGBA8 output
+
+	ToneMap toneMap = ToneMap::None;
 
 	bool mDirty = true; // Accumulation changed since last resolve
 };
