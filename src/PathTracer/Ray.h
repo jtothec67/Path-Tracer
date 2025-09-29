@@ -8,4 +8,6 @@ struct Ray
 	Ray(glm::vec3 _origin, glm::vec3 _direction) : origin(_origin), direction(glm::normalize(_direction)) {}
 	glm::vec3 origin;
 	glm::vec3 direction;
+
+	float currentIOR = 1.0f; // For tracking refraction through materials
 };

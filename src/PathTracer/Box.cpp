@@ -99,10 +99,12 @@ void Box::UpdateUI()
 		ImGui::DragFloat3("Rotation ", &mRotation[0], 1.0f, 0, 360);
         ImGui::DragFloat3("Size ", &mSize[0], 0.1f);
         ImGui::ColorEdit3("Albedo", &mMaterial.albedo.r);
-        ImGui::DragFloat("Roughness", &mMaterial.roughness, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("Metallic", &mMaterial.metallic, 0.01f, 0.0f, 1.0f);
+        ImGui::SliderFloat("Roughness", &mMaterial.roughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("Metallic", &mMaterial.metallic, 0.0f, 1.0f);
         ImGui::ColorEdit3("Emission Colour", &mMaterial.emissionColour.r);
-        ImGui::DragFloat("Emission Strength", &mMaterial.emissionStrength, 0.1f, 0.0f, 100.0f);
+        ImGui::SliderFloat("Emission Strength", &mMaterial.emissionStrength, 0.0f, 100.0f);
+        ImGui::SliderFloat("Index of Refraction", &mMaterial.IOR, 1.0f, 3.0f);
+        ImGui::SliderFloat("Transmission", &mMaterial.transmission, 0.0f, 1.0f);
         ImGui::TreePop();
     }
 }

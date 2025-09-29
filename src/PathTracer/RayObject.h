@@ -14,6 +14,9 @@ struct Material
 	float metallic = 0.0f;
 	glm::vec3 emissionColour = glm::vec3(1.0f);
 	float emissionStrength = 0.0f;
+
+	float IOR = 1.5f;
+	float transmission = 0.f;
 };
 
 struct Hit
@@ -22,6 +25,8 @@ struct Hit
 	glm::vec3 p; // Hit point
 	glm::vec3 n; // Normal
 	Material* mat;
+
+	bool frontFace;
 };
 
 class RayObject

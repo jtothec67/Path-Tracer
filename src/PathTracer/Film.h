@@ -48,7 +48,7 @@ private:
     std::vector<std::uint32_t> mSamples; // Sample counts per pixel
     std::vector<std::uint8_t>  mDisplay8; // Cached RGBA8 output
 
-	ToneMap toneMap = ToneMap::None;
+	ToneMap toneMap = ToneMap::Reinhard;
 
 	bool mDirty = true; // Accumulation changed since last resolve
 };

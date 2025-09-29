@@ -84,17 +84,123 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
     glm::vec3 woL(glm::dot(wo, t), glm::dot(wo, b), glm::dot(wo, n));
     float cosNo = std::max(0.0f, woL.z);
 
-    // Specular parameters (dielectric)
+    // Base PBR params
     glm::vec3 F0 = glm::mix(glm::vec3(0.04f), m.albedo, glm::vec3(m.metallic));
     float roughness = glm::clamp(m.roughness, 0.0f, 1.0f);
     float alpha = std::max(1e-4f, roughness * roughness);
+
+    // --------- Stage A: Transmission super-lobe coin flip ----------
+    const float pT = glm::clamp(m.transmission, 0.0f, 1.0f);
+    if (pT > 0.0f && Rand01() < pT)
+    {
+        // Interface Fresnel (dielectric) using current medium -> target medium
+        float eta_i = _ray.currentIOR;
+        float eta_m = m.IOR;
+        float eta_t = best.frontFace ? eta_m : 1.0f; // entering vs exiting to air
+        float eta = eta_i / eta_t;
+
+        float cos_i = glm::clamp(glm::dot(-_ray.direction, n), 0.0f, 1.0f);
+        float r0 = (eta_i - eta_t) / (eta_i + eta_t);
+        r0 *= r0;
+        float F = r0 + (1.0f - r0) * std::pow(1.0f - cos_i, 5.0f);
+
+        // TIR check
+        float sin2_t = eta * eta * std::max(0.0f, 1.0f - cos_i * cos_i);
+        bool  TIR = (sin2_t > 1.0f);
+
+        // ===== Stage B (one sample): reflect vs refract with clamped sub-prob =====
+        const float F_MIN = 0.05f; // tune: 0.02–0.1 generally stable
+        float pR = TIR ? 1.0f : glm::clamp(F, F_MIN, 1.0f - F_MIN);
+
+        if (Rand01() < pR)
+        {
+            // --- Rough REFLECTION (GGX) inside interface branch ---
+            glm::vec3 hL;
+            if (roughness <= 1e-4f) {
+                hL = glm::vec3(0, 0, 1);
+            }
+            else {
+                float u1 = Rand01(), u2 = Rand01();
+                float phi = 2.0f * 3.1415926535f * u1;
+                float a2 = alpha * alpha;
+                float tan2t = a2 * u2 / std::max(1e-6f, 1.0f - u2);
+                float cosT = 1.0f / std::sqrt(1.0f + tan2t);
+                float sinT = std::sqrt(std::max(0.0f, 1.0f - cosT * cosT));
+                hL = glm::normalize(glm::vec3(sinT * std::cos(phi), sinT * std::sin(phi), cosT));
+            }
+
+            // reflect woL around hL (same as your GGX)
+            glm::vec3 wiL = glm::reflect(-woL, glm::normalize(hL));
+            if (wiL.z <= 0.0f) return L;
+
+            glm::vec3 wi = glm::normalize(wiL.x * t + wiL.y * b + wiL.z * n);
+
+            float cosNi = std::max(0.0f, wiL.z);
+            float cosNh = std::max(0.0f, hL.z);
+            float cosVh = std::max(0.0f, glm::dot(woL, hL));
+
+            // Use your GGX reflect BRDF weight
+            glm::vec3 one(1.0f);
+            glm::vec3 Fmicro = F0 + (one - F0) * std::pow(1.0f - glm::clamp(cosVh, 0.0f, 1.0f), 5.0f);
+
+            float a2 = alpha * alpha;
+            float d = cosNh * cosNh * (a2 - 1.0f) + 1.0f;
+            float D = a2 / (3.1415926535f * d * d);
+
+            auto G1 = [&](float c) {
+                c = glm::clamp(c, 0.0f, 1.0f);
+                float s = std::sqrt(std::max(0.0f, 1.0f - c * c));
+                float t = (c > 0.0f) ? (s / c) : 0.0f;
+                float r = std::sqrt(1.0f + (alpha * alpha) * (t * t));
+                return 2.0f / (1.0f + r);
+                };
+            float G = G1(cosNo) * G1(cosNi);
+
+            float denom = std::max(1e-6f, cosNo * cosNh);
+            glm::vec3 weight = (Fmicro * (G * cosVh)) / denom;
+
+            // Divide by interface selection probability (NOT specProb)
+            float selPdf = std::max(1e-3f, pT * pR);   // pR is your clamped reflection sub-prob
+            weight /= selPdf;
+
+            Ray next;
+            next.origin = best.p + wi * kTMin;     // offset along chosen dir
+            next.direction = wi;
+            next.currentIOR = _ray.currentIOR;
+
+            L += weight * TraceRay(next, _depth - 1);
+            return L;
+        }
+        else
+        {
+            // Refraction (only if not TIR)
+            if (!TIR)
+            {
+                float cos_t = std::sqrt(std::max(0.0f, 1.0f - sin2_t));
+                //glm::vec3 tdir = glm::normalize(eta * (_ray.direction - cos_i * n) - cos_t * n);
+                glm::vec3 tdir = glm::normalize(glm::refract(_ray.direction, n, eta));
+
+
+                float selPdf = std::max(1e-3f, pT * (1.0f - pR));
+                float weight = (1.0f - F) / selPdf;  // importance correction
+
+                Ray next;
+                next.origin = best.p + tdir * kTMin; // offset along chosen dir
+                next.direction = tdir;
+                next.currentIOR = eta_t;                 // toggle medium
+
+                L += weight * TraceRay(next, _depth - 1);
+                return L;
+            }
+            // If TIR, we would have gone to reflection path above (pR==1).
+        }
+    }
 
     // Fresnel-Schlick at the view angle
     glm::vec3 one(1.0f);
     float cosThetaV = glm::clamp(cosNo, 0.0f, 1.0f);
     glm::vec3 Fv = F0 + (one - F0) * std::pow(1.0f - cosThetaV, 5.0f);
 
-    // Use Fresnel as mixture prob of sampling specular
     float specProb = glm::clamp((Fv.x + Fv.y + Fv.z) * (1.0f / 3.0f), 0.05f, 0.95f);
 
     if (Rand01() < specProb)
@@ -160,6 +266,7 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
 
         // Divide by lobe selection probability
         weight /= std::max(1e-3f, specProb);
+        weight /= std::max(1e-3f, 1.0f - pT);
 
         Ray next;
         next.origin = best.p + n * kTMin;
@@ -180,6 +287,8 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
         // Cosine-weighted Lambert: throughput *= albedo
         // Account for lobe choice by dividing by (1 - specProb)
         glm::vec3 weight = ((1.0f - m.metallic) * m.albedo) / std::max(1e-3f, (1.0f - specProb));
+        weight /= std::max(1e-3f, 1.0f - pT);
+
         L += weight * TraceRay(next, _depth - 1);
     }
 

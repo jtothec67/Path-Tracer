@@ -337,10 +337,10 @@ int main()
 			int before = current;
 
 			ImGui::TextUnformatted("Tone mapping");
-			// One radio per enum value (keep values in sync with your enum)
-			if (ImGui::RadioButton("None", &current, static_cast<int>(ToneMap::None))) {}
+			// One radio per enum value
+			ImGui::RadioButton("None", &current, static_cast<int>(ToneMap::None));
 			ImGui::SameLine();
-			if (ImGui::RadioButton("Reinhard", &current, static_cast<int>(ToneMap::Reinhard))) {}
+			ImGui::RadioButton("Reinhard", &current, static_cast<int>(ToneMap::Reinhard));
 
 			// If user changed selection, push it back as enum
 			if (current != before)
