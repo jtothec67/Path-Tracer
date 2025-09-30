@@ -62,7 +62,7 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
         // If we’re not tracing rays, just return the albedo at the hit
         return best.mat->albedo;
 	}
-
+    
     const Material& m = *best.mat;
     
     // Start with emission at the hit

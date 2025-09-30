@@ -48,8 +48,8 @@ void RayTraceParallel(ThreadPool& threadPool, int _numTasks, glm::ivec2 _winSize
 #undef main
 int main()
 {
-	int winWidth = 800;
-	int winHeight = 600;
+	int winWidth = 512;
+	int winHeight = 512;
 
 	std::shared_ptr<Film> film = std::make_shared<Film>(winWidth, winHeight);
 	Window window(winWidth, winHeight, "Tracer");
@@ -57,7 +57,9 @@ int main()
 	std::shared_ptr<PathTracer> pathTracer = std::make_shared<PathTracer>();
 
 	std::shared_ptr<Camera> camera = std::make_shared<Camera>(glm::ivec2(winWidth, winHeight));
-	camera->SetPosition(glm::vec3(-0.281922, 0, -5.05391));
+	//camera->SetPosition(glm::vec3(-0.281922, 0, -5.05391));
+	camera->SetPosition(glm::vec3(278 * 0.01, 273 * 0.01, -800 * 0.01));
+	camera->SetRotation(glm::vec3(0, 180, 0));
 
 	// Setting up the GUI system
 	IMGUI_CHECKVERSION();
@@ -114,99 +116,203 @@ int main()
 
 	//pathTracer->AddRayObject(sun);
 
-	// Room bounds in world space (open on the camera side)
-	const float roomMinX = -1.0f;
-	const float roomMaxX = 1.0f;
-	const float roomMinY = 0.0f;
-	const float roomMaxY = 2.0f;
-	const float roomNearZ = -3.0f;  // opening toward camera
-	const float roomFarZ = -7.0f;  // back wall
+	//// Room bounds in world space (open on the camera side)
+	//const float roomMinX = -1.0f;
+	//const float roomMaxX = 1.0f;
+	//const float roomMinY = 0.0f;
+	//const float roomMaxY = 2.0f;
+	//const float roomNearZ = -3.0f;  // opening toward camera
+	//const float roomFarZ = -7.0f;  // back wall
 
-	const float wallT = 0.01f;      // wall thickness
+	//const float wallT = 0.01f;      // wall thickness
 
-	Material white; white.albedo = glm::vec3(0.73f, 0.73f, 0.73f);
-	Material red;   red.albedo = glm::vec3(0.75f, 0.15f, 0.15f);
-	Material green; green.albedo = glm::vec3(0.15f, 0.75f, 0.15f);
+	//Material white; white.albedo = glm::vec3(0.73f, 0.73f, 0.73f);
+	//Material red;   red.albedo = glm::vec3(0.75f, 0.15f, 0.15f);
+	//Material green; green.albedo = glm::vec3(0.15f, 0.75f, 0.15f);
 
-	// Floor
+	//// Floor
+	//{
+	//	auto floorB = std::make_shared<Box>("Floor");
+	//	floorB->SetPosition(glm::vec3(0,-1,-7));
+	//	floorB->SetSize(glm::vec3(roomMaxX - roomMinX, wallT, roomNearZ - roomFarZ));
+	//	floorB->SetMaterial(white);
+	//	pathTracer->AddRayObject(floorB);
+	//}
+
+	//// Ceiling
+	//{
+	//	auto ceilB = std::make_shared<Box>("Ceiling");
+	//	ceilB->SetPosition(glm::vec3(-0.3, 0.99, -7));
+	//	ceilB->SetSize(glm::vec3(roomMaxX - roomMinX, wallT, roomNearZ - roomFarZ));
+	//	ceilB->SetMaterial(white);
+	//	pathTracer->AddRayObject(ceilB);
+	//}
+
+	//// Back wall
+	//{
+	//	auto backB = std::make_shared<Box>("BackWall");
+	//	backB->SetPosition(glm::vec3(-0.2, 0, -7));
+	//	backB->SetSize(glm::vec3(roomMaxX - roomMinX, roomMaxY - roomMinY, wallT));
+	//	backB->SetMaterial(white);
+	//	pathTracer->AddRayObject(backB);
+	//}
+
+	//// Front wall
+	//{
+	//	auto frontB = std::make_shared<Box>("FrontWall");
+	//	frontB->SetPosition(glm::vec3(-0.2, 0, -5));
+	//	frontB->SetSize(glm::vec3(roomMaxX - roomMinX, roomMaxY - roomMinY, wallT));
+	//	frontB->SetMaterial(white);
+	//	pathTracer->AddRayObject(frontB);
+	//}
+
+	//// Left wall (red)
+	//{
+	//	auto leftB = std::make_shared<Box>("LeftWall");
+	//	leftB->SetPosition(glm::vec3(-1, 0, -7));
+	//	leftB->SetSize(glm::vec3(wallT, roomMaxY - roomMinY, roomNearZ - roomFarZ));
+	//	leftB->SetMaterial(red);
+	//	pathTracer->AddRayObject(leftB);
+	//}
+
+	//// Right wall (green)
+	//{
+	//	auto rightB = std::make_shared<Box>("RightWall");
+	//	rightB->SetPosition(glm::vec3(0.59, 0, -7));
+	//	rightB->SetSize(glm::vec3(wallT, roomMaxY - roomMinY, roomNearZ - roomFarZ));
+	//	rightB->SetMaterial(green);
+	//	pathTracer->AddRayObject(rightB);
+	//}
+
+	//// Rectangular emissive ceiling light (centered, inset from ceiling)
+	//{
+	//	const glm::vec3 lightSize(1.2f, wallT, 1.8f);
+	//	const glm::vec3 lightPos(-0.2, 0.989, -6);
+
+	//	Material lightMat;
+	//	lightMat.emissionColour = glm::vec3(1.0f);
+	//	lightMat.emissionStrength = 3.5f;       // tweak as needed
+
+	//	auto lightB = std::make_shared<Box>("CeilingLight");
+	//	lightB->SetPosition(lightPos);
+	//	lightB->SetSize(lightSize);
+	//	lightB->SetMaterial(lightMat);
+	//	pathTracer->AddRayObject(lightB);
+	//}
+
+	//// Sphere
+	//{
+	//	auto sphere = std::make_shared<Sphere>("Sphere", glm::vec3(-0.2f, -0.3f, -7.0f));
+	//	sphere->SetRadius(0.535f);
+	//	Material sphereMat;
+	//	sphereMat.albedo = glm::vec3(0.6343, 0.5316, 0.1109);
+	//	sphereMat.roughness = 0.0f;
+	//	sphere->SetMaterial(sphereMat);
+	//	pathTracer->AddRayObject(sphere);
+	//}
+
+
+	// --- Cornell Box scene (thin-box planes) ---
+	// Units: original data is commonly given in mm. We'll scale by S to meters.
+	// If your tracer is unit-agnostic, you can set S = 1.0f.
+	const float S = 0.01f;       // 1 mm = 0.001 m
+	const float THICK = 0.01f;        // plane thickness in meters (normal-axis extent)
+
+	// Handy colors (RGB 0–1)
+	const glm::vec3 RED = glm::vec3(0.651f, 0.051f, 0.051f);  // left wall
+	const glm::vec3 GREEN = glm::vec3(0.122f, 0.451f, 0.149f);  // right wall
+	const glm::vec3 WHITE = glm::vec3(0.729f, 0.729f, 0.729f);  // floor/ceiling/back + inner boxes
+
+	// ============== Room (axis-aligned from (0,0,0) to (555,555,555)) ==============
 	{
+		// Floor (y = 0) – thin in Y
 		auto floorB = std::make_shared<Box>("Floor");
-		floorB->SetPosition(glm::vec3(0,-1,-7));
-		floorB->SetSize(glm::vec3(roomMaxX - roomMinX, wallT, roomNearZ - roomFarZ));
-		floorB->SetMaterial(white);
+		floorB->SetPosition(S * glm::vec3(277.5f, 0.0f + THICK * 0.5f / S, 277.5f));
+		floorB->SetRotation(glm::vec3(0.0f)); // axis-aligned
+		floorB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f));
+		Material floorMat; floorMat.albedo = WHITE;
+		floorB->SetMaterial(floorMat);
 		pathTracer->AddRayObject(floorB);
-	}
 
-	// Ceiling
-	{
+		// Ceiling (y = 555) – thin in Y
 		auto ceilB = std::make_shared<Box>("Ceiling");
-		ceilB->SetPosition(glm::vec3(-0.3, 0.99, -7));
-		ceilB->SetSize(glm::vec3(roomMaxX - roomMinX, wallT, roomNearZ - roomFarZ));
-		ceilB->SetMaterial(white);
+		ceilB->SetPosition(S * glm::vec3(277.5f, 555.0f - THICK * 0.5f / S, 277.5f));
+		ceilB->SetRotation(glm::vec3(0.0f));
+		ceilB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f));
+		Material ceilMat; ceilMat.albedo = WHITE;
+		ceilB->SetMaterial(ceilMat);
 		pathTracer->AddRayObject(ceilB);
-	}
 
-	// Back wall
-	{
+		// Back wall (z = 555) – thin in Z
 		auto backB = std::make_shared<Box>("BackWall");
-		backB->SetPosition(glm::vec3(-0.2, 0, -7));
-		backB->SetSize(glm::vec3(roomMaxX - roomMinX, roomMaxY - roomMinY, wallT));
-		backB->SetMaterial(white);
+		backB->SetPosition(S * glm::vec3(277.5f, 277.5f, 555.0f - THICK * 0.5f / S));
+		backB->SetRotation(glm::vec3(0.0f));
+		backB->SetSize(glm::vec3(S * 555.0f, S * 555.0f, THICK));
+		Material backMat; backMat.albedo = WHITE;
+		backB->SetMaterial(backMat);
 		pathTracer->AddRayObject(backB);
-	}
 
-	// Front wall
-	{
-		auto frontB = std::make_shared<Box>("FrontWall");
-		frontB->SetPosition(glm::vec3(-0.2, 0, -5));
-		frontB->SetSize(glm::vec3(roomMaxX - roomMinX, roomMaxY - roomMinY, wallT));
-		frontB->SetMaterial(white);
-		pathTracer->AddRayObject(frontB);
-	}
-
-	// Left wall (red)
-	{
+		// Left wall (x = 555) – thin in X (red)
 		auto leftB = std::make_shared<Box>("LeftWall");
-		leftB->SetPosition(glm::vec3(-1, 0, -7));
-		leftB->SetSize(glm::vec3(wallT, roomMaxY - roomMinY, roomNearZ - roomFarZ));
-		leftB->SetMaterial(red);
+		leftB->SetPosition(S * glm::vec3(555.0f - THICK * 0.5f / S, 277.5f, 277.5f));
+		leftB->SetRotation(glm::vec3(0.0f));
+		leftB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f));
+		Material leftMat; leftMat.albedo = RED;
+		leftB->SetMaterial(leftMat);
 		pathTracer->AddRayObject(leftB);
-	}
 
-	// Right wall (green)
-	{
+		// Right wall (x = 0) – thin in X (green)
 		auto rightB = std::make_shared<Box>("RightWall");
-		rightB->SetPosition(glm::vec3(0.59, 0, -7));
-		rightB->SetSize(glm::vec3(wallT, roomMaxY - roomMinY, roomNearZ - roomFarZ));
-		rightB->SetMaterial(green);
+		rightB->SetPosition(S * glm::vec3(0.0f + THICK * 0.5f / S, 277.5f, 277.5f));
+		rightB->SetRotation(glm::vec3(0.0f));
+		rightB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f));
+		Material rightMat; rightMat.albedo = GREEN;
+		rightB->SetMaterial(rightMat);
 		pathTracer->AddRayObject(rightB);
 	}
 
-	// Rectangular emissive ceiling light (centered, inset from ceiling)
+	// ============== Ceiling area light (rectangle), modeled as thin box ==============
+	// Classic opening corners (213, 343) in X and (227, 332) in Z -> center (278, 279.5) and size 130×105.
+	// We place a thin emissive box just below the ceiling so it doesn't Z-fight.
 	{
-		const glm::vec3 lightSize(1.2f, wallT, 1.8f);
-		const glm::vec3 lightPos(-0.2, 0.989, -6);
+		const glm::vec3 lightCenter = S * glm::vec3(278.0f, (555.0f - THICK * 0.5f / S) - 100*S, 279.5f);
+		const glm::vec3 lightSize = glm::vec3(S * 130.0f, THICK * 0.6f, S * 105.0f);
+
+		auto light = std::make_shared<Box>("CeilingLight");
+		light->SetPosition(lightCenter);
+		light->SetRotation(glm::vec3(0.0f));
+		light->SetSize(lightSize);
 
 		Material lightMat;
-		lightMat.emissionColour = glm::vec3(1.0f);
-		lightMat.emissionStrength = 3.5f;       // tweak as needed
-
-		auto lightB = std::make_shared<Box>("CeilingLight");
-		lightB->SetPosition(lightPos);
-		lightB->SetSize(lightSize);
-		lightB->SetMaterial(lightMat);
-		pathTracer->AddRayObject(lightB);
+		lightMat.emissionColour = glm::vec3(1.0f, 0.84f, 0.59f);
+		lightMat.emissionStrength = 15.0f; // tune as needed
+		// Optional: give it a faint albedo to avoid black edges if your BSDF expects it
+		lightMat.albedo = glm::vec3(0.0f);
+		light->SetMaterial(lightMat);
+		pathTracer->AddRayObject(light);
 	}
 
-	// Sphere
+	// ============== Inner boxes (simplified canonical transforms) ====================
+	// Short box: size (165,165,165), rotated -18° about Y, positioned at (130,0,65)
 	{
-		auto sphere = std::make_shared<Sphere>("Sphere", glm::vec3(-0.2f, -0.3f, -7.0f));
-		sphere->SetRadius(0.535f);
-		Material sphereMat;
-		sphereMat.albedo = glm::vec3(0.6343, 0.5316, 0.1109);
-		sphereMat.roughness = 0.0f;
-		sphere->SetMaterial(sphereMat);
-		pathTracer->AddRayObject(sphere);
+		auto sbox = std::make_shared<Box>("ShortBox");
+		sbox->SetPosition(S * glm::vec3(130.0f + 165.0f * 0.5f, 0.0f + 165.0f * 0.5f, 65.0f + 165.0f * 0.5f));
+		sbox->SetRotation(glm::vec3(0.0f, -18.0f, 0.0f)); // degrees
+		sbox->SetSize(S * glm::vec3(165.0f, 165.0f, 165.0f));
+		Material sMat; sMat.albedo = WHITE;
+		sbox->SetMaterial(sMat);
+		pathTracer->AddRayObject(sbox);
+	}
+
+	// Tall box: size (165,330,165), rotated +22.5 about Y, positioned at (265,0,295)
+	{
+		auto tbox = std::make_shared<Box>("TallBox");
+		tbox->SetPosition(S * glm::vec3(265.0f + 165.0f * 0.5f, 0.0f + 330.0f * 0.5f, 295.0f + 165.0f * 0.5f));
+		tbox->SetRotation(glm::vec3(0.0f, +22.5f, 0.0f)); // degrees
+		tbox->SetSize(S * glm::vec3(165.0f, 330.0f, 165.0f));
+		Material tMat; tMat.albedo = WHITE;
+		tbox->SetMaterial(tMat);
+		pathTracer->AddRayObject(tbox);
 	}
 
 

@@ -37,6 +37,12 @@ void Camera::CalculateMatrices(glm::ivec2 _winSize)
 // This function generates a ray from the camera through a point on the screen
 Ray Camera::GetRay(glm::ivec2 _windowPos, glm::ivec2 _windowSize)
 {
+    if (mLastWinSize != _windowSize)
+    {
+        mLastWinSize = _windowSize;
+        CalculateMatrices(_windowSize);
+	}
+
     // 1) NDC
     float nx = ((_windowPos.x + 0.5f) / float(_windowSize.x)) * 2.f - 1.f;
     float ny = ((_windowPos.y + 0.5f) / float(_windowSize.y)) * 2.f - 1.f;

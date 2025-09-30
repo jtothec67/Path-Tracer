@@ -37,7 +37,7 @@ private:
 	glm::vec3 mPosition{ 0.f };
 	glm::vec3 mRotation{ 0.f };
 
-	float mFov = 60.f;
+	float mFov = 40.f;
 	float mNearPlane = 0.1f ;
 	float mFarPlane = 100.f ;
 
