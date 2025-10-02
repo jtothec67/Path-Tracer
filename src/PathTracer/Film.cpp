@@ -34,7 +34,13 @@ void Film::Reset()
 void Film::AddSample(int _x, int _y, const glm::vec3& _linearRGB)
 {
     const int p = _y * mWidth + _x;
-    mAccum[p] += _linearRGB;
+
+	glm::vec3 contrib = _linearRGB;
+    const float maxLum = 12.0f; // start 8-20; tune per scene
+    float lum = glm::dot(contrib, glm::vec3(0.2126f, 0.7152f, 0.0722f));
+    if (lum > maxLum) contrib *= (maxLum / lum);
+
+    mAccum[p] += contrib;
     mSamples[p] += 1u;
     mDirty = true;
 }

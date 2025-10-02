@@ -39,7 +39,7 @@ public:
 	virtual bool RayIntersect(const Ray& _ray, float _tMin, float _tMax, Hit& _out) = 0;
 
 	void SetName(const std::string& _name) { mName = _name; }
-	void GetName(std::string& _name) { _name = mName; }
+	const std::string& GetName() { return mName; }
 
 	void SetPosition(const glm::vec3& _position) { mPosition = _position; }
 	glm::vec3 GetPosition() { return mPosition; }
@@ -50,7 +50,7 @@ public:
 	void SetMaterial(const Material& _material) { mMaterial = _material; }
 	Material GetMaterial() { return mMaterial; }
 
-	// UI function
+	// Inhereted classes set up their own UI
 	virtual void UpdateUI() {}
 
 protected:

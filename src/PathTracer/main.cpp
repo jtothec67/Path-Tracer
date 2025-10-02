@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "Sphere.h"
 #include "Box.h"
+#include "Mesh.h"
 #include "PathTracer.h"
 #include "Camera.h"
 #include "Timer.h"
@@ -229,7 +230,7 @@ int main()
 		auto floorB = std::make_shared<Box>("Floor");
 		floorB->SetPosition(S * glm::vec3(277.5f, 0.0f + THICK * 0.5f / S, 277.5f));
 		floorB->SetRotation(glm::vec3(0.0f)); // axis-aligned
-		floorB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f));
+		floorB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f * 10));
 		Material floorMat; floorMat.albedo = WHITE;
 		floorB->SetMaterial(floorMat);
 		pathTracer->AddRayObject(floorB);
@@ -238,7 +239,7 @@ int main()
 		auto ceilB = std::make_shared<Box>("Ceiling");
 		ceilB->SetPosition(S * glm::vec3(277.5f, 555.0f - THICK * 0.5f / S, 277.5f));
 		ceilB->SetRotation(glm::vec3(0.0f));
-		ceilB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f));
+		ceilB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f * 10));
 		Material ceilMat; ceilMat.albedo = WHITE;
 		ceilB->SetMaterial(ceilMat);
 		pathTracer->AddRayObject(ceilB);
@@ -256,7 +257,7 @@ int main()
 		auto leftB = std::make_shared<Box>("LeftWall");
 		leftB->SetPosition(S * glm::vec3(555.0f - THICK * 0.5f / S, 277.5f, 277.5f));
 		leftB->SetRotation(glm::vec3(0.0f));
-		leftB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f));
+		leftB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f * 10));
 		Material leftMat; leftMat.albedo = RED;
 		leftB->SetMaterial(leftMat);
 		pathTracer->AddRayObject(leftB);
@@ -265,7 +266,7 @@ int main()
 		auto rightB = std::make_shared<Box>("RightWall");
 		rightB->SetPosition(S * glm::vec3(0.0f + THICK * 0.5f / S, 277.5f, 277.5f));
 		rightB->SetRotation(glm::vec3(0.0f));
-		rightB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f));
+		rightB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f *10));
 		Material rightMat; rightMat.albedo = GREEN;
 		rightB->SetMaterial(rightMat);
 		pathTracer->AddRayObject(rightB);
@@ -292,28 +293,34 @@ int main()
 		pathTracer->AddRayObject(light);
 	}
 
-	// ============== Inner boxes (simplified canonical transforms) ====================
-	// Short box: size (165,165,165), rotated -18° about Y, positioned at (130,0,65)
-	{
-		auto sbox = std::make_shared<Box>("ShortBox");
-		sbox->SetPosition(S * glm::vec3(130.0f + 165.0f * 0.5f, 0.0f + 165.0f * 0.5f, 65.0f + 165.0f * 0.5f));
-		sbox->SetRotation(glm::vec3(0.0f, -18.0f, 0.0f)); // degrees
-		sbox->SetSize(S * glm::vec3(165.0f, 165.0f, 165.0f));
-		Material sMat; sMat.albedo = WHITE;
-		sbox->SetMaterial(sMat);
-		pathTracer->AddRayObject(sbox);
-	}
+	auto mesh = std::make_shared<Mesh>("../assets/models/Car.glb", "Car");
+	mesh->SetPosition(glm::vec3(2.5, 0.5, 3.275));
+	mesh->SetRotation(glm::vec3(0, -28, 0));
+	mesh->SetScale(glm::vec3(1.5f));
+	pathTracer->AddRayObject(mesh);
 
-	// Tall box: size (165,330,165), rotated +22.5 about Y, positioned at (265,0,295)
-	{
-		auto tbox = std::make_shared<Box>("TallBox");
-		tbox->SetPosition(S * glm::vec3(265.0f + 165.0f * 0.5f, 0.0f + 330.0f * 0.5f, 295.0f + 165.0f * 0.5f));
-		tbox->SetRotation(glm::vec3(0.0f, +22.5f, 0.0f)); // degrees
-		tbox->SetSize(S * glm::vec3(165.0f, 330.0f, 165.0f));
-		Material tMat; tMat.albedo = WHITE;
-		tbox->SetMaterial(tMat);
-		pathTracer->AddRayObject(tbox);
-	}
+	//// ============== Inner boxes (simplified canonical transforms) ====================
+	//// Short box: size (165,165,165), rotated -18° about Y, positioned at (130,0,65)
+	//{
+	//	auto sbox = std::make_shared<Box>("ShortBox");
+	//	sbox->SetPosition(S * glm::vec3(130.0f + 165.0f * 0.5f, 0.0f + 165.0f * 0.5f, 65.0f + 165.0f * 0.5f));
+	//	sbox->SetRotation(glm::vec3(0.0f, -18.0f, 0.0f)); // degrees
+	//	sbox->SetSize(S * glm::vec3(165.0f, 165.0f, 165.0f));
+	//	Material sMat; sMat.albedo = WHITE;
+	//	sbox->SetMaterial(sMat);
+	//	pathTracer->AddRayObject(sbox);
+	//}
+	// 
+	//// Tall box: size (165,330,165), rotated +22.5 about Y, positioned at (265,0,295)
+	//{
+	//	auto tbox = std::make_shared<Box>("TallBox");
+	//	tbox->SetPosition(S * glm::vec3(265.0f + 165.0f * 0.5f, 0.0f + 330.0f * 0.5f, 295.0f + 165.0f * 0.5f));
+	//	tbox->SetRotation(glm::vec3(0.0f, +22.5f, 0.0f)); // degrees
+	//	tbox->SetSize(S * glm::vec3(165.0f, 330.0f, 165.0f));
+	//	Material tMat; tMat.albedo = WHITE;
+	//	tbox->SetMaterial(tMat);
+	//	pathTracer->AddRayObject(tbox);
+	//}
 
 
 	int numThreads = 32;

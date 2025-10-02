@@ -47,6 +47,8 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
         Hit h{};
         if (obj->RayIntersect(_ray, kTMin, closestT, h))
         {
+            if (h.t >= closestT)
+				continue;
             // If the object filled h.t < closestT, it’s the new best hit
             hitSomething = true;
             closestT = h.t;
@@ -60,7 +62,12 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
     if (_albedoOnly)
     {
         // If we’re not tracing rays, just return the albedo at the hit
-        return best.mat->albedo;
+        // Make colours darker if they are further away to allow perspective for same colours
+		// Colours stop getting darker at a distance of 20 units
+		glm::vec3 albedo = best.mat->albedo;
+		float dist = glm::clamp(closestT / 20.f, 0.0f, 0.8f);
+
+		return albedo * (1.0f - dist);
 	}
     
     const Material& m = *best.mat;
@@ -110,7 +117,7 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
 
         // ===== Stage B (one sample): reflect vs refract with clamped sub-prob =====
         const float F_MIN = 0.05f; // tune: 0.02–0.1 generally stable
-        float pR = TIR ? 1.0f : glm::clamp(F, F_MIN, 1.0f - F_MIN);
+        float pR = TIR ? 1.0f : F;   // no F_MIN clamp
 
         if (Rand01() < pR)
         {
