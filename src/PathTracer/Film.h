@@ -4,6 +4,12 @@
 
 #include <vector>
 
+enum class ColourSpace
+{
+    Linear,
+    sRGB
+};
+
 enum class ToneMap
 {
     None,
@@ -28,10 +34,11 @@ public:
 	// Returns a reference to an internal buffer sized W*H*4. Used for OpenGL texture upload.
     const std::vector<std::uint8_t>& ResolveToRGBA8();
 
-    const std::vector<std::uint8_t>& ResolveToRGBA8_sRGB();
+	void SetColourSpace(ColourSpace _colourSpace) { mColourSpace = _colourSpace; mDirty = true; }
+	ColourSpace GetColourSpace() const { return mColourSpace; }
 
-	void SetToneMap(ToneMap _toneMap) { toneMap = _toneMap; mDirty = true; }
-	ToneMap GetToneMap() const { return toneMap; }
+	void SetToneMap(ToneMap _toneMap) { mToneMap = _toneMap; mDirty = true; }
+	ToneMap GetToneMap() const { return mToneMap; }
 
     int  Width() const { return mWidth; }
     int  Height() const { return mHeight; }
@@ -48,7 +55,8 @@ private:
     std::vector<std::uint32_t> mSamples; // Sample counts per pixel
     std::vector<std::uint8_t>  mDisplay8; // Cached RGBA8 output
 
-	ToneMap toneMap = ToneMap::Reinhard;
+	ColourSpace mColourSpace = ColourSpace::sRGB;
+	ToneMap mToneMap = ToneMap::Reinhard;
 
 	bool mDirty = true; // Accumulation changed since last resolve
 };

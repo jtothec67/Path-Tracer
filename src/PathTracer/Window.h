@@ -3,6 +3,7 @@
 #include <SDL2/sdl.h>
 #include <GL/glew.h>
 
+#include <string>
 #include <vector>
 
 class Window
@@ -13,6 +14,8 @@ public:
 
     void Resize(int _width, int _height); // Reallocate GL texture and viewport
     void DrawScreen(const std::vector<uint8_t>& _rgba8); // Upload and draw
+
+    bool SaveImagePNG(const std::string& _filename, const std::vector<uint8_t>& _rgba8);
 
     int  Width()  const { return mWidth; }
     int  Height() const { return mHeight; }

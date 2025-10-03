@@ -1,6 +1,9 @@
 #include "Window.h"
 
+#include "stb_image_write.h"
+
 #include <iostream>
+#include <filesystem>
 
 Window::Window(int _width, int _height, const char* _title) : mWidth(_width), mHeight(_height)
 {
@@ -156,6 +159,33 @@ void Window::DrawScreen(const std::vector<uint8_t>& rgba8)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     Draw();
+}
+
+bool Window::SaveImagePNG(const std::string& _filename, const std::vector<uint8_t>& _rgba8)
+{
+    // Ensure parent directory exists
+    std::error_code ec;
+    std::filesystem::path p(_filename);
+    if (p.has_parent_path()) std::filesystem::create_directories(p.parent_path(), ec);
+
+    const int stride = mWidth * 4;
+
+    // Optional vertical flip so the file isn't upside-down
+    const uint8_t* dataPtr = _rgba8.data();
+    std::vector<uint8_t> flipped;
+
+    flipped.resize(_rgba8.size());
+    for (int y = 0; y < mHeight; ++y)
+    {
+        const uint8_t* src = _rgba8.data() + (size_t)y * stride;
+        uint8_t* dst = flipped.data() + (size_t)(mHeight - 1 - y) * stride;
+        std::memcpy(dst, src, (size_t)stride);
+    }
+    dataPtr = flipped.data();
+
+    // Write PNG (comp=4 for RGBA)
+    int ok = stbi_write_png(_filename.c_str(), mWidth, mHeight, 4, dataPtr, stride);
+    return ok != 0;
 }
 
 void Window::Draw()

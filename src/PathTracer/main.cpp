@@ -253,6 +253,15 @@ int main()
 		backB->SetMaterial(backMat);
 		pathTracer->AddRayObject(backB);
 
+		// Back wall (z = 555) – thin in Z
+		auto frontB = std::make_shared<Box>("FrontWall");
+		frontB->SetPosition(S* glm::vec3(277.5f, 277.5f, 555.0f - THICK * 0.5f / S));
+		frontB->SetRotation(glm::vec3(0.0f));
+		frontB->SetSize(glm::vec3(S * 555.0f, S * 555.0f, THICK));
+		Material frontMat; frontMat.albedo = WHITE;
+		frontB->SetMaterial(frontMat);
+		pathTracer->AddRayObject(frontB);
+
 		// Left wall (x = 555) – thin in X (red)
 		auto leftB = std::make_shared<Box>("LeftWall");
 		leftB->SetPosition(S * glm::vec3(555.0f - THICK * 0.5f / S, 277.5f, 277.5f));
@@ -337,7 +346,11 @@ int main()
 
 	bool albedoOnly = true;
 
-	bool sRGB = true;
+	bool showDisplay = true;
+
+	bool lockRendering = false;
+
+	char imageNameBuf[256] = "";
 
 	SDL_Event event;
 
@@ -360,7 +373,7 @@ int main()
 				{
 					running = false;
 				}
-				else if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+				else if (event.window.event == SDL_WINDOWEVENT_RESIZED && !lockRendering)
 				{
 					winWidth = event.window.data1;
 					winHeight = event.window.data2;
@@ -373,39 +386,42 @@ int main()
 			}
 			if (event.type == SDL_KEYDOWN)
 			{
-				switch (event.key.keysym.sym)
+				if (!lockRendering)
 				{
-					// Camera movement
-				case SDLK_w:
-					camera->SetPosition(camera->GetPosition() + camera->GetForward() * msPerFrame / 1000.f);
-					break;
-				case SDLK_s:
-					camera->SetPosition(camera->GetPosition() - camera->GetForward() * msPerFrame / 1000.f);
-					break;
-				case SDLK_a:
-					camera->SetPosition(camera->GetPosition() + camera->GetRight() * msPerFrame / 1000.f);
-					break;
-				case SDLK_d:
-					camera->SetPosition(camera->GetPosition() - camera->GetRight() * msPerFrame / 1000.f);
-					break;
-				case SDLK_q:
-					camera->SetPosition(camera->GetPosition() - glm::vec3(0, 1, 0));
-					break;
-				case SDLK_e:
-					camera->SetPosition(camera->GetPosition() + glm::vec3(0, 1, 0));
-					break;
-				case SDLK_UP:
-					camera->SetRotation(glm::vec3(camera->GetRotation().x - 1, camera->GetRotation().y, camera->GetRotation().z));
-					break;
-				case SDLK_DOWN:
-					camera->SetRotation(glm::vec3(camera->GetRotation().x + 1, camera->GetRotation().y, camera->GetRotation().z));
-					break;
-				case SDLK_LEFT:
-					camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y - 1, camera->GetRotation().z));
-					break;
-				case SDLK_RIGHT:
-					camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y + 1, camera->GetRotation().z));
-					break;
+					switch (event.key.keysym.sym)
+					{
+						// Camera movement
+					case SDLK_w:
+						camera->SetPosition(camera->GetPosition() + camera->GetForward() * msPerFrame / 1000.f);
+						break;
+					case SDLK_s:
+						camera->SetPosition(camera->GetPosition() - camera->GetForward() * msPerFrame / 1000.f);
+						break;
+					case SDLK_a:
+						camera->SetPosition(camera->GetPosition() + camera->GetRight() * msPerFrame / 1000.f);
+						break;
+					case SDLK_d:
+						camera->SetPosition(camera->GetPosition() - camera->GetRight() * msPerFrame / 1000.f);
+						break;
+					case SDLK_q:
+						camera->SetPosition(camera->GetPosition() - glm::vec3(0, 1, 0));
+						break;
+					case SDLK_e:
+						camera->SetPosition(camera->GetPosition() + glm::vec3(0, 1, 0));
+						break;
+					case SDLK_UP:
+						camera->SetRotation(glm::vec3(camera->GetRotation().x - 1, camera->GetRotation().y, camera->GetRotation().z));
+						break;
+					case SDLK_DOWN:
+						camera->SetRotation(glm::vec3(camera->GetRotation().x + 1, camera->GetRotation().y, camera->GetRotation().z));
+						break;
+					case SDLK_LEFT:
+						camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y - 1, camera->GetRotation().z));
+						break;
+					case SDLK_RIGHT:
+						camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y + 1, camera->GetRotation().z));
+						break;
+					}
 				}
 			}
 		}
@@ -420,51 +436,89 @@ int main()
 
 			ImGui::Begin("Scene Controls");
 
+			if (ImGui::Checkbox("Lock in for rendering", &lockRendering) && albedoOnly)
+			{
+				// If just locked, reset accumulation
+				albedoOnly = false;
+				film->Reset();
+				accumulationTimer.Reset();
+				frameCounter = 0;
+			}
+
             ImGui::Text("%.3f ms", msPerFrame);
 
 			ImGui::Text("%.0f seconds", accumulationTimer.GetElapsedSeconds());
 			ImGui::Text("%i frames", frameCounter);
 
-            if (ImGui::Checkbox("Albedo Only", &albedoOnly))
-            {
-                // If it was just disabled, reset film once for accumulation
-                if (!albedoOnly)
-                {
-                    film->Reset();
-					accumulationTimer.Reset();
-					frameCounter = 0;
-                }
-            }
-			if (albedoOnly)
-			{
-				// Use as a debug so don't want accumulation
-				film->Reset();
-				accumulationTimer.Reset();
-				frameCounter = 0;
-			}
-
-			ImGui::Checkbox("sRGB output ", &sRGB);
-
 			// Grab current value as int
-			int current = static_cast<int>(film->GetToneMap());
-			int before = current;
+			int currentColour = static_cast<int>(film->GetColourSpace());
+			int beforeColour = currentColour;
 
-			ImGui::TextUnformatted("Tone mapping");
+			ImGui::Text("Colour space");
 			// One radio per enum value
-			ImGui::RadioButton("None", &current, static_cast<int>(ToneMap::None));
+			ImGui::RadioButton("Linear", &currentColour, static_cast<int>(ColourSpace::Linear));
 			ImGui::SameLine();
-			ImGui::RadioButton("Reinhard", &current, static_cast<int>(ToneMap::Reinhard));
+			ImGui::RadioButton("sRGB", &currentColour, static_cast<int>(ColourSpace::sRGB));
 
 			// If user changed selection, push it back as enum
-			if (current != before)
-				film->SetToneMap(static_cast<ToneMap>(current));
+			if (currentColour != beforeColour)
+				film->SetColourSpace(static_cast<ColourSpace>(currentColour));
 
-			if (ImGui::Button("Rest Accumulation"))
+			// Grab current value as int
+			int currentTone = static_cast<int>(film->GetToneMap());
+			int beforeTone = currentTone;
+
+			ImGui::Text("Tone mapping");
+			// One radio per enum value
+			ImGui::RadioButton("None", &currentTone, static_cast<int>(ToneMap::None));
+			ImGui::SameLine();
+			ImGui::RadioButton("Reinhard", &currentTone, static_cast<int>(ToneMap::Reinhard));
+
+			// If user changed selection, push it back as enum
+			if (currentTone != beforeTone)
+				film->SetToneMap(static_cast<ToneMap>(currentTone));
+
+			ImGui::Text("Save image to file");
+			ImGui::InputText("File path", imageNameBuf, IM_ARRAYSIZE(imageNameBuf));
+			if (ImGui::Button("Save Image"))
 			{
-				film->Reset();
-				accumulationTimer.Reset();
-				frameCounter = 0;
+				std::string filePathStr = "../assets/outputs/" + std::string(imageNameBuf) + ".png";
+				if (!window.SaveImagePNG(filePathStr, film->ResolveToRGBA8()))
+				{
+					std::cout << "Failed to save image to " << filePathStr << std::endl;
+				}
 			}
+
+			if (!lockRendering)
+			{
+				if (ImGui::Button("Rest Accumulation"))
+				{
+					film->Reset();
+					accumulationTimer.Reset();
+					frameCounter = 0;
+				}
+
+
+				if (ImGui::Checkbox("Albedo Only", &albedoOnly))
+				{
+					// If it was just disabled, reset film once for accumulation
+					if (!albedoOnly)
+					{
+						film->Reset();
+						accumulationTimer.Reset();
+						frameCounter = 0;
+					}
+				}
+				if (albedoOnly)
+				{
+					// Use as a debug so don't want accumulation
+					film->Reset();
+					accumulationTimer.Reset();
+					frameCounter = 0;
+				}
+			}
+
+			ImGui::Checkbox("Show display", &showDisplay);
 
 			ImGui::SliderInt("Ray Depth", &rayDepth, 1, 10);
 
@@ -476,10 +530,12 @@ int main()
 
 			ImGui::SliderInt("Number of tasks", &numTasks, 1, 128);
 
-
-			for (auto& rayObject : pathTracer->GetRayObjects())
+			if (!lockRendering)
 			{
-				rayObject->UpdateUI();
+				for (auto& rayObject : pathTracer->GetRayObjects())
+				{
+					rayObject->UpdateUI();
+				}
 			}
 
 			ImGui::End();
@@ -488,13 +544,15 @@ int main()
 		frameCounter++;
 		RayTraceParallel(threadPool, numTasks, glm::ivec2(winWidth, winHeight), camera, pathTracer, film, rayDepth, albedoOnly);
 
-		auto RGBA = sRGB ? film->ResolveToRGBA8_sRGB() : film->ResolveToRGBA8();
-
-		window.DrawScreen(RGBA);
+		if (showDisplay)
+		{
+			window.DrawScreen(film->ResolveToRGBA8());
+		}
 
 		// Draws the GUI
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 
 		// Free floating ImGui window
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
