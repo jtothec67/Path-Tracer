@@ -66,18 +66,15 @@ Ray Camera::GetRay(glm::ivec2 _windowPos, glm::ivec2 _windowSize)
 // Helper functions to get the camera's forward, right, and up vectors
 glm::vec3 Camera::GetForward()
 {
-    glm::vec3 forward = glm::vec3(mView[0][2], mView[1][2], mView[2][2]);
-    return glm::normalize(forward);
+    return glm::normalize(glm::mat3(mInvView) * glm::vec3(0, 0, -1));
 }
 
 glm::vec3 Camera::GetRight()
 {
-    glm::vec3 right = glm::vec3(mView[0][0], mView[1][0], mView[2][0]);
-    return glm::normalize(right);
+    return glm::normalize(glm::mat3(mInvView) * glm::vec3(1, 0, 0));
 }
 
 glm::vec3 Camera::GetUp()
 {
-    glm::vec3 up = glm::vec3(mView[0][1], mView[1][1], mView[2][1]);
-    return glm::normalize(up);
+    return glm::normalize(glm::mat3(mInvView) * glm::vec3(0, 1, 0));
 }

@@ -245,8 +245,6 @@ bool Mesh::RayIntersect(const Ray& _ray, float _tMin, float _tMax, Hit& _out)
         tlsMat = Material{};
     }
 
-
-
     // Output
     const float tWorld = closestT / dirLen;
     _out.t = tWorld;
@@ -255,7 +253,6 @@ bool Mesh::RayIntersect(const Ray& _ray, float _tMin, float _tMax, Hit& _out)
     _out.frontFace = frontFace;
     _out.mat = &tlsMat;
 
-	//std::cout << "Hit mesh\n";
     return true;
 }
 

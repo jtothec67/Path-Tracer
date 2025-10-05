@@ -18,7 +18,7 @@ public:
 	void ClearScene() { rayObjects.clear(); }
 
 private:
-	glm::vec3 mBackgroundColour{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 mBackgroundColour{ 0.2f, 0.2f, 0.2f };
 
 	std::vector<std::shared_ptr<RayObject>> rayObjects;
 };

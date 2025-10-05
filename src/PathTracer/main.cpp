@@ -58,9 +58,10 @@ int main()
 	std::shared_ptr<PathTracer> pathTracer = std::make_shared<PathTracer>();
 
 	std::shared_ptr<Camera> camera = std::make_shared<Camera>(glm::ivec2(winWidth, winHeight));
-	//camera->SetPosition(glm::vec3(-0.281922, 0, -5.05391));
-	camera->SetPosition(glm::vec3(278 * 0.01, 273 * 0.01, -800 * 0.01));
-	camera->SetRotation(glm::vec3(0, 180, 0));
+	camera->SetFov(45.0f);
+	camera->SetPosition(glm::vec3(2.3, 1.06, -0.32));
+	//camera->SetPosition(glm::vec3(278 * 0.01, 273 * 0.01, -800 * 0.01));
+	//camera->SetRotation(glm::vec3(0, 14.60 + 90, 0));
 
 	// Setting up the GUI system
 	IMGUI_CHECKVERSION();
@@ -213,100 +214,100 @@ int main()
 	//}
 
 
-	// --- Cornell Box scene (thin-box planes) ---
-	// Units: original data is commonly given in mm. We'll scale by S to meters.
-	// If your tracer is unit-agnostic, you can set S = 1.0f.
-	const float S = 0.01f;       // 1 mm = 0.001 m
-	const float THICK = 0.01f;        // plane thickness in meters (normal-axis extent)
+	//// --- Cornell Box scene (thin-box planes) ---
+	//// Units: original data is commonly given in mm. We'll scale by S to meters.
+	//// If your tracer is unit-agnostic, you can set S = 1.0f.
+	//const float S = 0.01f;       // 1 mm = 0.001 m
+	//const float THICK = 0.01f;        // plane thickness in meters (normal-axis extent)
 
-	// Handy colors (RGB 0–1)
-	const glm::vec3 RED = glm::vec3(0.651f, 0.051f, 0.051f);  // left wall
-	const glm::vec3 GREEN = glm::vec3(0.122f, 0.451f, 0.149f);  // right wall
-	const glm::vec3 WHITE = glm::vec3(0.729f, 0.729f, 0.729f);  // floor/ceiling/back + inner boxes
+	//// Handy colors (RGB 0–1)
+	//const glm::vec3 RED = glm::vec3(0.651f, 0.051f, 0.051f);  // left wall
+	//const glm::vec3 GREEN = glm::vec3(0.122f, 0.451f, 0.149f);  // right wall
+	//const glm::vec3 WHITE = glm::vec3(0.729f, 0.729f, 0.729f);  // floor/ceiling/back + inner boxes
 
-	// ============== Room (axis-aligned from (0,0,0) to (555,555,555)) ==============
-	{
-		// Floor (y = 0) – thin in Y
-		auto floorB = std::make_shared<Box>("Floor");
-		floorB->SetPosition(S * glm::vec3(277.5f, 0.0f + THICK * 0.5f / S, 277.5f));
-		floorB->SetRotation(glm::vec3(0.0f)); // axis-aligned
-		floorB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f * 10));
-		Material floorMat; floorMat.albedo = WHITE;
-		floorB->SetMaterial(floorMat);
-		pathTracer->AddRayObject(floorB);
+	//// ============== Room (axis-aligned from (0,0,0) to (555,555,555)) ==============
+	//{
+	//	// Floor (y = 0) – thin in Y
+	//	auto floorB = std::make_shared<Box>("Floor");
+	//	floorB->SetPosition(S * glm::vec3(277.5f, 0.0f + THICK * 0.5f / S, 277.5f));
+	//	floorB->SetRotation(glm::vec3(0.0f)); // axis-aligned
+	//	floorB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f * 10));
+	//	Material floorMat; floorMat.albedo = WHITE;
+	//	floorB->SetMaterial(floorMat);
+	//	pathTracer->AddRayObject(floorB);
 
-		// Ceiling (y = 555) – thin in Y
-		auto ceilB = std::make_shared<Box>("Ceiling");
-		ceilB->SetPosition(S * glm::vec3(277.5f, 555.0f - THICK * 0.5f / S, 277.5f));
-		ceilB->SetRotation(glm::vec3(0.0f));
-		ceilB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f * 10));
-		Material ceilMat; ceilMat.albedo = WHITE;
-		ceilB->SetMaterial(ceilMat);
-		pathTracer->AddRayObject(ceilB);
+	//	// Ceiling (y = 555) – thin in Y
+	//	auto ceilB = std::make_shared<Box>("Ceiling");
+	//	ceilB->SetPosition(S * glm::vec3(277.5f, 555.0f - THICK * 0.5f / S, 277.5f));
+	//	ceilB->SetRotation(glm::vec3(0.0f));
+	//	ceilB->SetSize(glm::vec3(S * 555.0f, THICK, S * 555.0f * 10));
+	//	Material ceilMat; ceilMat.albedo = WHITE;
+	//	ceilB->SetMaterial(ceilMat);
+	//	pathTracer->AddRayObject(ceilB);
 
-		// Back wall (z = 555) – thin in Z
-		auto backB = std::make_shared<Box>("BackWall");
-		backB->SetPosition(S * glm::vec3(277.5f, 277.5f, 555.0f - THICK * 0.5f / S));
-		backB->SetRotation(glm::vec3(0.0f));
-		backB->SetSize(glm::vec3(S * 555.0f, S * 555.0f, THICK));
-		Material backMat; backMat.albedo = WHITE;
-		backB->SetMaterial(backMat);
-		pathTracer->AddRayObject(backB);
+	//	// Back wall (z = 555) – thin in Z
+	//	auto backB = std::make_shared<Box>("BackWall");
+	//	backB->SetPosition(S * glm::vec3(277.5f, 277.5f, 555.0f - THICK * 0.5f / S));
+	//	backB->SetRotation(glm::vec3(0.0f));
+	//	backB->SetSize(glm::vec3(S * 555.0f, S * 555.0f, THICK));
+	//	Material backMat; backMat.albedo = WHITE;
+	//	backB->SetMaterial(backMat);
+	//	pathTracer->AddRayObject(backB);
 
-		// Back wall (z = 555) – thin in Z
-		auto frontB = std::make_shared<Box>("FrontWall");
-		frontB->SetPosition(S* glm::vec3(277.5f, 277.5f, 555.0f - THICK * 0.5f / S));
-		frontB->SetRotation(glm::vec3(0.0f));
-		frontB->SetSize(glm::vec3(S * 555.0f, S * 555.0f, THICK));
-		Material frontMat; frontMat.albedo = WHITE;
-		frontB->SetMaterial(frontMat);
-		pathTracer->AddRayObject(frontB);
+	//	// Back wall (z = 555) – thin in Z
+	//	auto frontB = std::make_shared<Box>("FrontWall");
+	//	frontB->SetPosition(S* glm::vec3(277.5f, 277.5f, 555.0f - THICK * 0.5f / S));
+	//	frontB->SetRotation(glm::vec3(0.0f));
+	//	frontB->SetSize(glm::vec3(S * 555.0f, S * 555.0f, THICK));
+	//	Material frontMat; frontMat.albedo = WHITE;
+	//	frontB->SetMaterial(frontMat);
+	//	pathTracer->AddRayObject(frontB);
 
-		// Left wall (x = 555) – thin in X (red)
-		auto leftB = std::make_shared<Box>("LeftWall");
-		leftB->SetPosition(S * glm::vec3(555.0f - THICK * 0.5f / S, 277.5f, 277.5f));
-		leftB->SetRotation(glm::vec3(0.0f));
-		leftB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f * 10));
-		Material leftMat; leftMat.albedo = RED;
-		leftB->SetMaterial(leftMat);
-		pathTracer->AddRayObject(leftB);
+	//	// Left wall (x = 555) – thin in X (red)
+	//	auto leftB = std::make_shared<Box>("LeftWall");
+	//	leftB->SetPosition(S * glm::vec3(555.0f - THICK * 0.5f / S, 277.5f, 277.5f));
+	//	leftB->SetRotation(glm::vec3(0.0f));
+	//	leftB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f * 10));
+	//	Material leftMat; leftMat.albedo = RED;
+	//	leftB->SetMaterial(leftMat);
+	//	pathTracer->AddRayObject(leftB);
 
-		// Right wall (x = 0) – thin in X (green)
-		auto rightB = std::make_shared<Box>("RightWall");
-		rightB->SetPosition(S * glm::vec3(0.0f + THICK * 0.5f / S, 277.5f, 277.5f));
-		rightB->SetRotation(glm::vec3(0.0f));
-		rightB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f *10));
-		Material rightMat; rightMat.albedo = GREEN;
-		rightB->SetMaterial(rightMat);
-		pathTracer->AddRayObject(rightB);
-	}
+	//	// Right wall (x = 0) – thin in X (green)
+	//	auto rightB = std::make_shared<Box>("RightWall");
+	//	rightB->SetPosition(S * glm::vec3(0.0f + THICK * 0.5f / S, 277.5f, 277.5f));
+	//	rightB->SetRotation(glm::vec3(0.0f));
+	//	rightB->SetSize(glm::vec3(THICK, S * 555.0f, S * 555.0f *10));
+	//	Material rightMat; rightMat.albedo = GREEN;
+	//	rightB->SetMaterial(rightMat);
+	//	pathTracer->AddRayObject(rightB);
+	//}
 
-	// ============== Ceiling area light (rectangle), modeled as thin box ==============
-	// Classic opening corners (213, 343) in X and (227, 332) in Z -> center (278, 279.5) and size 130×105.
-	// We place a thin emissive box just below the ceiling so it doesn't Z-fight.
-	{
-		const glm::vec3 lightCenter = S * glm::vec3(278.0f, (555.0f - THICK * 0.5f / S) - 100*S, 279.5f);
-		const glm::vec3 lightSize = glm::vec3(S * 130.0f, THICK * 0.6f, S * 105.0f);
+	//// ============== Ceiling area light (rectangle), modeled as thin box ==============
+	//// Classic opening corners (213, 343) in X and (227, 332) in Z -> center (278, 279.5) and size 130×105.
+	//// We place a thin emissive box just below the ceiling so it doesn't Z-fight.
+	//{
+	//	const glm::vec3 lightCenter = S * glm::vec3(278.0f, (555.0f - THICK * 0.5f / S) - 100*S, 279.5f);
+	//	const glm::vec3 lightSize = glm::vec3(S * 130.0f, THICK * 0.6f, S * 105.0f);
 
-		auto light = std::make_shared<Box>("CeilingLight");
-		light->SetPosition(lightCenter);
-		light->SetRotation(glm::vec3(0.0f));
-		light->SetSize(lightSize);
+	//	auto light = std::make_shared<Box>("CeilingLight");
+	//	light->SetPosition(lightCenter);
+	//	light->SetRotation(glm::vec3(0.0f));
+	//	light->SetSize(lightSize);
 
-		Material lightMat;
-		lightMat.emissionColour = glm::vec3(1.0f, 0.84f, 0.59f);
-		lightMat.emissionStrength = 15.0f; // tune as needed
-		// Optional: give it a faint albedo to avoid black edges if your BSDF expects it
-		lightMat.albedo = glm::vec3(0.0f);
-		light->SetMaterial(lightMat);
-		pathTracer->AddRayObject(light);
-	}
+	//	Material lightMat;
+	//	lightMat.emissionColour = glm::vec3(1.0f, 0.84f, 0.59f);
+	//	lightMat.emissionStrength = 15.0f; // tune as needed
+	//	// Optional: give it a faint albedo to avoid black edges if your BSDF expects it
+	//	lightMat.albedo = glm::vec3(0.0f);
+	//	light->SetMaterial(lightMat);
+	//	pathTracer->AddRayObject(light);
+	//}
 
-	auto mesh = std::make_shared<Mesh>("../assets/models/Car.glb", "Car");
-	mesh->SetPosition(glm::vec3(2.5, 0.5, 3.275));
-	mesh->SetRotation(glm::vec3(0, -28, 0));
-	mesh->SetScale(glm::vec3(1.5f));
-	pathTracer->AddRayObject(mesh);
+	//auto mesh = std::make_shared<Mesh>("../assets/models/chinese_dragon.glb", "Dragon");
+	//mesh->SetPosition(glm::vec3(2.5, 0.5, 3.275));
+	//mesh->SetRotation(glm::vec3(0, -28, 0));
+	//mesh->SetScale(glm::vec3(1.5f));
+	//pathTracer->AddRayObject(mesh);
 
 	//// ============== Inner boxes (simplified canonical transforms) ====================
 	//// Short box: size (165,165,165), rotated -18° about Y, positioned at (130,0,65)
@@ -331,6 +332,21 @@ int main()
 	//	pathTracer->AddRayObject(tbox);
 	//}
 
+	auto mesh = std::make_shared<Mesh>("../assets/models/Sponza2.glb", "Sponza");
+	//mesh->SetPosition(glm::vec3(2.5, 0.5, 3.275));
+	mesh->SetRotation(glm::vec3(0, 0, 0));
+	mesh->SetScale(glm::vec3(0.01f));
+	pathTracer->AddRayObject(mesh);
+
+	auto light = std::make_shared<Box>("Light");
+	light->SetPosition(glm::vec3(0, 17, 0));
+	light->SetSize(glm::vec3(50, 1, 50));
+	Material lightMat;
+	lightMat.emissionColour = glm::vec3(1.0f, 0.84f, 0.59f);
+	lightMat.emissionStrength = 50.0f;
+	light->SetMaterial(lightMat);
+	pathTracer->AddRayObject(light);
+
 
 	int numThreads = 32;
 	int numTasks = 128;
@@ -349,6 +365,8 @@ int main()
 	bool showDisplay = true;
 
 	bool lockRendering = false;
+
+	bool pauseRendering = false;
 
 	char imageNameBuf[256] = "";
 
@@ -410,16 +428,16 @@ int main()
 						camera->SetPosition(camera->GetPosition() + glm::vec3(0, 1, 0));
 						break;
 					case SDLK_UP:
-						camera->SetRotation(glm::vec3(camera->GetRotation().x - 1, camera->GetRotation().y, camera->GetRotation().z));
+						camera->SetRotation(glm::vec3(camera->GetRotation().x - 25 * msPerFrame / 1000.f, camera->GetRotation().y, camera->GetRotation().z));
 						break;
 					case SDLK_DOWN:
-						camera->SetRotation(glm::vec3(camera->GetRotation().x + 1, camera->GetRotation().y, camera->GetRotation().z));
+						camera->SetRotation(glm::vec3(camera->GetRotation().x + 25 * msPerFrame / 1000.f, camera->GetRotation().y, camera->GetRotation().z));
 						break;
 					case SDLK_LEFT:
-						camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y - 1, camera->GetRotation().z));
+						camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y - 25 * msPerFrame / 1000.f, camera->GetRotation().z));
 						break;
 					case SDLK_RIGHT:
-						camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y + 1, camera->GetRotation().z));
+						camera->SetRotation(glm::vec3(camera->GetRotation().x, camera->GetRotation().y + 25 * msPerFrame / 1000.f, camera->GetRotation().z));
 						break;
 					}
 				}
@@ -444,6 +462,8 @@ int main()
 				accumulationTimer.Reset();
 				frameCounter = 0;
 			}
+
+			ImGui::Checkbox("Pause rendering", &pauseRendering);
 
             ImGui::Text("%.3f ms", msPerFrame);
 
@@ -541,8 +561,11 @@ int main()
 			ImGui::End();
 		}
 
-		frameCounter++;
-		RayTraceParallel(threadPool, numTasks, glm::ivec2(winWidth, winHeight), camera, pathTracer, film, rayDepth, albedoOnly);
+		if (!pauseRendering)
+		{
+			frameCounter++;
+			RayTraceParallel(threadPool, numTasks, glm::ivec2(winWidth, winHeight), camera, pathTracer, film, rayDepth, albedoOnly);
+		}
 
 		if (showDisplay)
 		{
