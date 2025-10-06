@@ -96,7 +96,7 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
     float roughness = glm::clamp(m.roughness, 0.0f, 1.0f);
     float alpha = std::max(1e-4f, roughness * roughness);
 
-    // --------- Stage A: Transmission super-lobe coin flip ----------
+    // Stage A: Transmission super-lobe coin flip
     const float pT = glm::clamp(m.transmission, 0.0f, 1.0f);
     if (pT > 0.0f && Rand01() < pT)
     {
@@ -115,13 +115,13 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
         float sin2_t = eta * eta * std::max(0.0f, 1.0f - cos_i * cos_i);
         bool  TIR = (sin2_t > 1.0f);
 
-        // ===== Stage B (one sample): reflect vs refract with clamped sub-prob =====
+        // Stage B (one sample): reflect vs refract with clamped sub-prob
         const float F_MIN = 0.05f; // tune: 0.02–0.1 generally stable
         float pR = TIR ? 1.0f : F;   // no F_MIN clamp
 
         if (Rand01() < pR)
         {
-            // --- Rough REFLECTION (GGX) inside interface branch ---
+            // Rough REFLECTION (GGX) inside interface branch
             glm::vec3 hL;
             if (roughness <= 1e-4f) {
                 hL = glm::vec3(0, 0, 1);
@@ -194,7 +194,7 @@ glm::vec3 PathTracer::TraceRay(Ray _ray, int _depth, bool _albedoOnly)
                 Ray next;
                 next.origin = best.p + tdir * kTMin; // offset along chosen dir
                 next.direction = tdir;
-                next.currentIOR = eta_t;                 // toggle medium
+                next.currentIOR = eta_t; // toggle medium
 
                 L += weight * TraceRay(next, _depth - 1);
                 return L;

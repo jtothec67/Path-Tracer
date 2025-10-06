@@ -263,13 +263,25 @@ void Mesh::UpdateUI()
         ImGui::DragFloat3("Position ", &mPosition[0], 0.1);
         ImGui::DragFloat3("Rotation ", &mRotation[0], 1.0f);
 		ImGui::DragFloat3("Scale ", &mScale[0], 0.1f);
-        ImGui::ColorEdit3("Albedo", &mMaterial.albedo.r);
-        ImGui::SliderFloat("Roughness", &mMaterial.roughness, 0.0f, 1.0f);
-        ImGui::SliderFloat("Metallic", &mMaterial.metallic, 0.0f, 1.0f);
-        ImGui::ColorEdit3("Emission Colour", &mMaterial.emissionColour.r);
-        ImGui::SliderFloat("Emission Strength", &mMaterial.emissionStrength, 0.0f, 100.0f);
-        ImGui::SliderFloat("Index of Refraction", &mMaterial.IOR, 1.0f, 3.0f);
-        ImGui::SliderFloat("Transmission", &mMaterial.transmission, 0.0f, 1.0f);
+
+		std::vector<ModelLoader::MaterialGroup>& groups = mModel->GetMaterialGroupsMutable();
+		for (int i = 0; i < groups.size(); i++)
+        {
+			ImGui::PushID(i);
+            if (ImGui::TreeNode(groups[i].materialName.c_str()))
+            {
+                ModelLoader::PBRMaterial& pbr = groups[i].pbr;
+                ImGui::ColorEdit3("Albedo", &pbr.baseColorFactor.r);
+                ImGui::SliderFloat("Roughness", &pbr.roughnessFactor, 0.0f, 1.0f);
+                ImGui::SliderFloat("Metallic", &pbr.metallicFactor, 0.0f, 1.0f);
+				ImGui::SliderFloat("Normal Scale", &pbr.normalScale, 0.0f, 5.0f);
+                ImGui::ColorEdit3("Emission Colour", &pbr.emissiveFactor.r);
+                ImGui::SliderFloat("Index of Refraction", &pbr.ior, 1.0f, 3.0f);
+                ImGui::SliderFloat("Transmission", &pbr.transmissionFactor, 0.0f, 1.0f);
+				ImGui::TreePop();
+            }
+            ImGui::PopID();
+		}
         ImGui::TreePop();
     }
 }

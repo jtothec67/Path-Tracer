@@ -80,7 +80,7 @@ public:
 
         // KHR materials extensions (subset)
         float transmissionFactor = 0.0f;
-        int   transmissionTexIndex = -1;
+        int transmissionTexIndex = -1;
         float ior = 1.5f;
     };
 
@@ -94,6 +94,7 @@ public:
 
     // Material groups (when multi-material).
     const std::vector<MaterialGroup>& GetMaterialGroups() const { return m_materialGroups; }
+	std::vector<MaterialGroup>& GetMaterialGroupsMutable() { return m_materialGroups; }
 
     // Embedded images from the glTF (CPU-side, raw bytes).
     const std::vector<EmbeddedImage>& GetEmbeddedImages() const { return m_embeddedImages; }

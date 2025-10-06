@@ -170,7 +170,7 @@ bool Window::SaveImagePNG(const std::string& _filename, const std::vector<uint8_
 
     const int stride = mWidth * 4;
 
-    // Optional vertical flip so the file isn't upside-down
+    // Vertical flip so the file isn't upside-down
     const uint8_t* dataPtr = _rgba8.data();
     std::vector<uint8_t> flipped;
 
